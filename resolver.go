@@ -5,6 +5,8 @@ import (
 	"net"
 )
 
+// Perform domain name resolution for a given destination, returning a list of
+// IPs. If resolution is not successful, the list will be empty.
 func Lookup(dest *Destination) []string {
 	var ips []string
 
