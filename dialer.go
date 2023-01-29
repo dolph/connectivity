@@ -11,7 +11,6 @@ import (
 // can be used to ensure that individual records in a DNS response are available.
 func Dial(dest *Destination, ip string) bool {
 	hostPort := fmt.Sprintf("%s:%d", ip, dest.Port)
-	// log.Printf("%s Dialing %s://%s", GetLocalIPs(), dest.Protocol, hostPort)
 
 	conn, err := net.Dial(dest.Protocol, hostPort)
 	if err != nil {
