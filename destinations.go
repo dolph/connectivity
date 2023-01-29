@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net"
 	"net/url"
@@ -11,15 +12,24 @@ import (
 )
 
 type Destination struct {
-	URL      string
-	Protocol string
-	Scheme   string
-	Host     string
-	Port     int
+	URL         string
+	Protocol    string
+	Scheme      string
+	Username    string
+	Password    string
+	PasswordSet bool
+	Host        string
+	Port        int
+	Path        string
 }
 
-func (dest Destination) String() string {
-	return dest.URL
+func (dest *Destination) String() string {
+	if dest.Username != "" && dest.PasswordSet {
+		return fmt.Sprintf("%s://%s:[...]@%s:%d%s", dest.Scheme, dest.Username, dest.Host, dest.Port, dest.Path)
+	} else if dest.Username != "" && !dest.PasswordSet {
+		return fmt.Sprintf("%s://%s@%s:%d%s", dest.Scheme, dest.Username, dest.Host, dest.Port, dest.Path)
+	}
+	return fmt.Sprintf("%s://%s:%d%s", dest.Scheme, dest.Host, dest.Port, dest.Path)
 }
 
 func NewDestination(dest string) *Destination {
@@ -60,16 +70,23 @@ func NewDestination(dest string) *Destination {
 		protocol = scheme
 	}
 
+	username := url.User.Username()
+	password, passwordSet := url.User.Password()
+
 	return &Destination{
-		URL:      dest,
-		Protocol: protocol,
-		Scheme:   scheme,
-		Host:     host,
-		Port:     portNumber}
+		URL:         dest,
+		Protocol:    protocol,
+		Scheme:      scheme,
+		Username:    username,
+		Password:    password,
+		PasswordSet: passwordSet,
+		Host:        host,
+		Port:        portNumber,
+		Path:        url.Path}
 }
 
 func (dest *Destination) Monitor() {
-	log.Printf("Monitoring connectivity to %s (scheme=%s host=%s port=%d) (%s)", dest, dest.Scheme, dest.Host, dest.Port, dest.Protocol)
+	log.Printf("Monitoring connectivity to %s (%s)", dest, dest.Protocol)
 	confidence := 1
 
 	for {

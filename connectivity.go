@@ -22,6 +22,8 @@ func main() {
 		}
 	}
 
+	// At this point we know that all destinations are valid, so we can start
+	// monitoring each of them.
 	for _, dest := range destinations {
 		go dest.Monitor()
 	}
