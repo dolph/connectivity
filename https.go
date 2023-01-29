@@ -9,7 +9,7 @@ import (
 func HTTPS(dest *Destination) bool {
 	_, err := http.Get(dest.URL)
 	if err != nil {
-		log.Printf("%s failed: %v", dest, err)
+		log.Printf("%s Failed HTTP GET %s: %v", GetLocalIPs(), dest, err)
 		return false
 	}
 	return true
