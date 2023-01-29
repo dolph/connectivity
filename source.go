@@ -17,5 +17,8 @@ func GetLocalIPs() []string {
 			}
 		}
 	}
+	if len(IPs) == 0 {
+		IPs = append(IPs, "127.0.0.1")
+	}
 	return IPs
 }
