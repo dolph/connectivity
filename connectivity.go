@@ -18,7 +18,11 @@ func main() {
 	var destinations []*Destination
 	for idx, url := range os.Args {
 		if idx != 0 {
-			destinations = append(destinations, NewDestination(url))
+			dest, err := NewDestination(url)
+			if err != nil {
+				os.Exit(2)
+			}
+			destinations = append(destinations, dest)
 		}
 	}
 

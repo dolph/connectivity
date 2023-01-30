@@ -5,7 +5,6 @@ import (
 	"log"
 	"net"
 	"net/url"
-	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -32,18 +31,18 @@ func (dest *Destination) String() string {
 	return fmt.Sprintf("%s://%s:%d%s", dest.Scheme, dest.Host, dest.Port, dest.Path)
 }
 
-func NewDestination(dest string) *Destination {
+func NewDestination(dest string) (*Destination, error) {
 	url, err := url.Parse(dest)
 	if err != nil {
-		log.Fatalf("Failed to parse URL (%s): %s", url, err)
-		os.Exit(2)
+		log.Printf("Failed to parse URL (%s): %s", url, err)
+		return nil, err
 	}
 
 	// Determine host
 	host := url.Hostname()
 	if host == "" {
-		log.Fatalf("Failed to parse a host in URL (%s): %s", url, err)
-		os.Exit(2)
+		log.Printf("Failed to parse a host in URL (%s): %s", url, err)
+		return nil, err
 	}
 
 	// Determine scheme
@@ -59,8 +58,8 @@ func NewDestination(dest string) *Destination {
 		portNumber, err = net.LookupPort("tcp", scheme)
 
 		if err != nil {
-			log.Fatalf("Unsupported scheme (try specifying tcp:// or udp:// and an explicit port) (%s): %s", url, err)
-			os.Exit(2)
+			log.Printf("Unsupported scheme (try specifying tcp:// or udp:// and an explicit port) (%s): %s", url, err)
+			return nil, err
 		}
 	}
 
@@ -74,15 +73,16 @@ func NewDestination(dest string) *Destination {
 	password, passwordSet := url.User.Password()
 
 	return &Destination{
-		URL:         dest,
-		Protocol:    protocol,
-		Scheme:      scheme,
-		Username:    username,
-		Password:    password,
-		PasswordSet: passwordSet,
-		Host:        host,
-		Port:        portNumber,
-		Path:        url.Path}
+			URL:         dest,
+			Protocol:    protocol,
+			Scheme:      scheme,
+			Username:    username,
+			Password:    password,
+			PasswordSet: passwordSet,
+			Host:        host,
+			Port:        portNumber,
+			Path:        url.Path},
+		nil
 }
 
 func (dest *Destination) Monitor() {
