@@ -50,6 +50,30 @@ func TestMinimalHttpsUrl(t *testing.T) {
 	assertPortEquals(t, got, 443)
 }
 
+func TestMinimalMysqlUrl(t *testing.T) {
+	got, err := NewDestination("mysql://host")
+	assertNoError(t, got, err)
+	assertSchemeEquals(t, got, "mysql")
+	assertHostEquals(t, got, "host")
+	assertPortEquals(t, got, 3306)
+}
+
+func TestMinimalPostgresUrl(t *testing.T) {
+	got, err := NewDestination("postgres://host")
+	assertNoError(t, got, err)
+	assertSchemeEquals(t, got, "postgres")
+	assertHostEquals(t, got, "host")
+	assertPortEquals(t, got, 5432)
+}
+
+func TestMinimalNatsUrl(t *testing.T) {
+	got, err := NewDestination("nats://host")
+	assertNoError(t, got, err)
+	assertSchemeEquals(t, got, "nats")
+	assertHostEquals(t, got, "host")
+	assertPortEquals(t, got, 4222)
+}
+
 func TestSchemeNormalization(t *testing.T) {
 	got, err := NewDestination("HTtP://host")
 	assertNoError(t, got, err)

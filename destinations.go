@@ -58,8 +58,14 @@ func NewDestination(dest string) (*Destination, error) {
 		portNumber, err = net.LookupPort("tcp", scheme)
 
 		if err != nil {
-			log.Printf("Unsupported scheme (try specifying tcp:// or udp:// and an explicit port) (%s): %s", url, err)
-			return nil, err
+			// Custom ports for schemes unknown to Go can be set here to avoid erroring
+			// If Go adopts support for one of these, this code won't be reached.
+			if scheme == "nats" {
+				portNumber = 4222
+			} else {
+				log.Printf("Unsupported scheme (try specifying tcp:// or udp:// and an explicit port) (%s): %s", url, err)
+				return nil, err
+			}
 		}
 	}
 
