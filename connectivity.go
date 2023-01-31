@@ -1,10 +1,16 @@
 package main
 
 import (
+	"fmt"
 	"os"
+	"sync"
 )
 
 func main() {
+	// Configuration
+	exitOnSuccess := os.Getenv("C10Y_WAIT")
+	fmt.Printf("Wait: %s\n", exitOnSuccess)
+
 	// Basic design:
 	// Handoff each URL to a monitoring process that will be in charge of it.
 	// Each URL is pre-processed to understand how it can be validated.
@@ -26,12 +32,25 @@ func main() {
 		}
 	}
 
-	// At this point we know that all destinations are valid, so we can start
-	// monitoring each of them.
-	for _, dest := range destinations {
-		go dest.Monitor()
-	}
+	if exitOnSuccess == "1" {
+		var wg sync.WaitGroup
+		for _, dest := range destinations {
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				dest.WaitFor()
+			}()
+		}
 
-	// Sleep forever
-	select {}
+		wg.Wait()
+	} else {
+		// At this point we know that all destinations are valid, so we can start
+		// monitoring each of them.
+		for _, dest := range destinations {
+			go dest.Monitor()
+		}
+
+		// Sleep forever
+		select {}
+	}
 }

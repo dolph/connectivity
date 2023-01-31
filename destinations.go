@@ -91,25 +91,32 @@ func NewDestination(dest string) (*Destination, error) {
 		nil
 }
 
+func (dest *Destination) Check() bool {
+	// Assume the destination is reachable until proven otherwise
+	reachable := true
+
+	for _, ip := range Lookup(dest) {
+		// Check that this isn't an IPv6 result
+		if !strings.Contains(ip, ":") {
+			reachable = reachable && Dial(dest, ip)
+		}
+	}
+
+	if reachable {
+		if dest.Scheme == "http" || dest.Scheme == "https" {
+			reachable = reachable && HTTPS(dest)
+		}
+	}
+
+	return reachable
+}
+
 func (dest *Destination) Monitor() {
 	log.Printf("Monitoring connectivity to %s (%s)", dest, dest.Protocol)
 	confidence := 1
 
 	for {
-		// Assume the destination is unreachable until proven otherwise
-		reachable := false
-
-		for _, ip := range Lookup(dest) {
-			if !strings.Contains(ip, ":") {
-				reachable = reachable || Dial(dest, ip)
-			}
-		}
-
-		if reachable {
-			if dest.Scheme == "http" || dest.Scheme == "https" {
-				HTTPS(dest)
-			}
-		}
+		reachable := dest.Check()
 
 		if reachable {
 			confidence += 1
@@ -122,6 +129,21 @@ func (dest *Destination) Monitor() {
 				confidence = 1
 			}
 		}
+
 		time.Sleep(time.Duration(confidence) * time.Minute)
+	}
+}
+
+func (dest *Destination) WaitFor() {
+	log.Printf("Waiting for connectivity to %s (%s)", dest, dest.Protocol)
+
+	for {
+		reachable := dest.Check()
+
+		if reachable {
+			return
+		}
+
+		time.Sleep(15 * time.Second)
 	}
 }
