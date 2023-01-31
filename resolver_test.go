@@ -25,7 +25,7 @@ func assertIpInResult(t *testing.T, got []string, want string) bool {
 
 func assertLenOfResultsInRange(t *testing.T, got []string, wantMin int, wantMax int) {
 	if wantMin > wantMax {
-		t.Errorf("wantMin must be less than wantMax")
+		t.Errorf("wantMin (%d) must be less than or equal to wantMax (%d)", wantMin, wantMax)
 	} else if len(got) < wantMin {
 		t.Errorf("len(Lookup(dest)) = %s; want >= %d", got, wantMin)
 	} else if len(got) > wantMax {
@@ -52,4 +52,11 @@ func TestLookupGoogle(t *testing.T) {
 	assertNoError(t, dest, err)
 	got := Lookup(dest)
 	assertLenOfResultsInRange(t, got, 2, 20)
+}
+
+func TestLookupInvalidHostname(t *testing.T) {
+	dest, err := NewDestination("https://a.b.c")
+	assertNoError(t, dest, err)
+	got := Lookup(dest)
+	assertLenOfResultsInRange(t, got, 0, 0)
 }
