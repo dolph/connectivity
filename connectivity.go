@@ -36,10 +36,10 @@ func main() {
 		var wg sync.WaitGroup
 		for _, dest := range destinations {
 			wg.Add(1)
-			go func() {
+			go func(dest *Destination) {
 				defer wg.Done()
 				dest.WaitFor()
-			}()
+			}(dest)
 		}
 
 		wg.Wait()
