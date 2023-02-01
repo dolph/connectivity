@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"os"
 	"sync"
 )
@@ -9,7 +8,6 @@ import (
 func main() {
 	// Configuration
 	exitOnSuccess := os.Getenv("C10Y_WAIT")
-	fmt.Printf("Wait: %s\n", exitOnSuccess)
 
 	// Basic design:
 	// Handoff each URL to a monitoring process that will be in charge of it.
