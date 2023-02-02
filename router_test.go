@@ -1,7 +1,9 @@
 package main
 
 import (
+	"fmt"
 	"net"
+	"os"
 	"strings"
 	"testing"
 )
@@ -55,7 +57,8 @@ func TestRouteToLoopback1(t *testing.T) {
 	assertRouteSourceIPEquals(t, route, "127.0.0.1")
 	assertRouteGatewayIPEquals(t, route, "<nil>")
 	assertRouteDestinationIPEquals(t, route, "127.0.0.1")
-	assertRouteStringEquals(t, route, "[x1c][lo][127.0.0.1]")
+	hostname, _ := os.Hostname()
+	assertRouteStringEquals(t, route, fmt.Sprintf("[%s][lo][127.0.0.1]", hostname))
 }
 
 func TestRouteToLoopback2(t *testing.T) {
@@ -64,7 +67,8 @@ func TestRouteToLoopback2(t *testing.T) {
 	assertRouteSourceIPEquals(t, route, "127.0.0.1")
 	assertRouteGatewayIPEquals(t, route, "<nil>")
 	assertRouteDestinationIPEquals(t, route, "127.0.1.1")
-	assertRouteStringEquals(t, route, "[x1c][lo][127.0.1.1]")
+	hostname, _ := os.Hostname()
+	assertRouteStringEquals(t, route, fmt.Sprintf("[%s][lo][127.0.1.1]", hostname))
 }
 
 func TestRouteToLoopback3(t *testing.T) {
@@ -73,7 +77,8 @@ func TestRouteToLoopback3(t *testing.T) {
 	assertRouteSourceIPEquals(t, route, "127.0.0.1")
 	assertRouteGatewayIPEquals(t, route, "<nil>")
 	assertRouteDestinationIPEquals(t, route, "127.1.0.1")
-	assertRouteStringEquals(t, route, "[x1c][lo][127.1.0.1]")
+	hostname, _ := os.Hostname()
+	assertRouteStringEquals(t, route, fmt.Sprintf("[%s][lo][127.1.0.1]", hostname))
 }
 
 func TestRouteToPublic(t *testing.T) {
