@@ -1,10 +1,11 @@
 package main
 
 import (
+	"net"
 	"testing"
 )
 
-func assertLookupEquals(t *testing.T, got []string, want []string) {
+func assertLookupEquals(t *testing.T, got []net.IP, want []net.IP) {
 	if len(got) != len(want) {
 		t.Errorf("len(Lookup(dest)) != %d; want %d", len(got), len(want))
 	}
@@ -13,9 +14,9 @@ func assertLookupEquals(t *testing.T, got []string, want []string) {
 	}
 }
 
-func assertIpInResult(t *testing.T, got []string, want string) bool {
+func assertIpInResult(t *testing.T, got []net.IP, want net.IP) bool {
 	for _, gotResult := range got {
-		if gotResult == want {
+		if gotResult.String() == want.String() {
 			return true
 		}
 	}
@@ -23,7 +24,7 @@ func assertIpInResult(t *testing.T, got []string, want string) bool {
 	return false
 }
 
-func assertLenOfResultsInRange(t *testing.T, got []string, wantMin int, wantMax int) {
+func assertLenOfResultsInRange(t *testing.T, got []net.IP, wantMin int, wantMax int) {
 	if wantMin > wantMax {
 		t.Errorf("wantMin (%d) must be less than or equal to wantMax (%d)", wantMin, wantMax)
 	} else if len(got) < wantMin {
@@ -37,21 +38,21 @@ func TestLookupLoopbackIp(t *testing.T) {
 	dest, err := NewDestination("http://127.0.0.1")
 	assertNoError(t, dest, err)
 	got := Lookup(dest)
-	assertLookupEquals(t, got, []string{"127.0.0.1"})
+	assertLookupEquals(t, got, []net.IP{net.ParseIP("127.0.0.1")})
 }
 
 func TestLookupPublicIp(t *testing.T) {
 	dest, err := NewDestination("http://8.8.8.8")
 	assertNoError(t, dest, err)
 	got := Lookup(dest)
-	assertLookupEquals(t, got, []string{"8.8.8.8"})
+	assertLookupEquals(t, got, []net.IP{net.ParseIP("8.8.8.8")})
 }
 
-func TestLookupGoogle(t *testing.T) {
-	dest, err := NewDestination("https://google.com")
+func TestLookupExample(t *testing.T) {
+	dest, err := NewDestination("https://example.com")
 	assertNoError(t, dest, err)
 	got := Lookup(dest)
-	assertLenOfResultsInRange(t, got, 2, 20)
+	assertLenOfResultsInRange(t, got, 1, 10)
 }
 
 func TestLookupInvalidHostname(t *testing.T) {

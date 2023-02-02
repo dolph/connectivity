@@ -7,8 +7,8 @@ import (
 
 // Perform domain name resolution for a given destination, returning a list of
 // IPs. If resolution is not successful, the list will be empty.
-func Lookup(dest *Destination) []string {
-	var ips []string
+func Lookup(dest *Destination) []net.IP {
+	var ips []net.IP
 
 	results, err := net.LookupIP(dest.Host)
 	if err != nil {
@@ -17,8 +17,10 @@ func Lookup(dest *Destination) []string {
 	}
 
 	for _, ip := range results {
-		s := ip.String()
-		ips = append(ips, s)
+		// Ignore IPv6 for now
+		if ip.To4() != nil {
+			ips = append(ips, ip)
+		}
 	}
 	return ips
 }

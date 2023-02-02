@@ -97,7 +97,7 @@ func (dest *Destination) Check() bool {
 
 	for _, ip := range Lookup(dest) {
 		// Check that this isn't an IPv6 result
-		if !strings.Contains(ip, ":") {
+		if !strings.Contains(ip.String(), ":") {
 			reachable = reachable && Dial(dest, ip)
 		}
 	}
