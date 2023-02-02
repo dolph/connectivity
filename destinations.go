@@ -95,10 +95,18 @@ func (dest *Destination) Check() bool {
 	// Assume the destination is reachable until proven otherwise
 	reachable := true
 
-	for _, ip := range Lookup(dest) {
-		// Check that this isn't an IPv6 result
-		if !strings.Contains(ip.String(), ":") {
-			reachable = reachable && Dial(dest, ip)
+	dnsResults, err := Lookup(dest)
+	if err != nil {
+		log.Printf("%s Failed to resolve %s (%v)", GetLocalIPs(), dest.Host, err)
+		reachable = false
+	}
+
+	if reachable {
+		for _, ip := range dnsResults {
+			// Check that this isn't an IPv6 result
+			if !strings.Contains(ip.String(), ":") {
+				reachable = reachable && Dial(dest, ip)
+			}
 		}
 	}
 
