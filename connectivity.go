@@ -30,25 +30,34 @@ func main() {
 		}
 	}
 
+	// At this point we know that all destinations are valid, so we can start
+	// checking them. Do we want to exit once all checks pass, or run as a
+	// monitor daemon?
 	if exitOnSuccess == "1" {
-		var wg sync.WaitGroup
-		for _, dest := range destinations {
-			wg.Add(1)
-			go func(dest *Destination) {
-				defer wg.Done()
-				dest.WaitFor()
-			}(dest)
-		}
-
-		wg.Wait()
+		WaitForConnectivity(destinations)
 	} else {
-		// At this point we know that all destinations are valid, so we can start
-		// monitoring each of them.
-		for _, dest := range destinations {
-			go dest.Monitor()
-		}
-
-		// Sleep forever
-		select {}
+		MonitorConnectivityForever(destinations)
 	}
+}
+
+func WaitForConnectivity(destinations []*Destination) {
+	var wg sync.WaitGroup
+	for _, dest := range destinations {
+		wg.Add(1)
+		go func(dest *Destination) {
+			defer wg.Done()
+			dest.WaitFor()
+		}(dest)
+	}
+
+	wg.Wait()
+}
+
+func MonitorConnectivityForever(destinations []*Destination) {
+	for _, dest := range destinations {
+		go dest.Monitor()
+	}
+
+	// Sleep forever
+	select {}
 }
