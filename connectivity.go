@@ -33,8 +33,12 @@ func main() {
 		config := LoadConfig(FindConfig())
 		destinations := ParseDestinations(config.URLs)
 		MonitorConnectivityForever(destinations)
-	} else if command == "help" || command == "--help" || command == "-h" {
-		PrintUsage()
+	} else if command == "help" {
+		if len(os.Args) == 3 {
+			PrintCommandUsage(os.Args[2])
+		} else {
+			PrintUsage()
+		}
 	} else {
 		PrintUsage()
 		os.Exit(1)
@@ -51,6 +55,38 @@ func PrintUsage() {
 	fmt.Println("  monitor			Continuously monitor all connectivity forever")
 	fmt.Println("  validate-config  Load config without making any network requests")
 	fmt.Println("  help				Show this help text")
+	fmt.Println("")
+	fmt.Println("Use \"connectivity help <command>\" for more information about that command.")
+}
+
+func PrintCommandUsage() {
+	if command == "wait" {
+		fmt.Println("Wait for all specified connectivity to be verified at least once, and exit.")
+		fmt.Println("")
+		fmt.Println("Usage: connectivity wait")
+		fmt.Println("")
+		fmt.Println("This is useful when you need to wait for DNS propogation, a process to start")
+		fmt.Println("listening, configuration to be applied, etc, before doing something else.")
+	} else if command == "monitor" {
+		fmt.Println("Continuously monitor all connectivity forever.")
+		fmt.Println("")
+		fmt.Println("Usage: connectivity monitor")
+		fmt.Println("")
+		fmt.Println("This is useful to run as a daemon for continuously monitoring network")
+		fmt.Println("dependencies.")
+	} else if command == "validate-config" {
+		fmt.Println("Wait for all connectivity to be verified at least once.")
+		fmt.Println("")
+		fmt.Println("Usage: connectivity validate-config [config-path]")
+		fmt.Println("")
+		fmt.Println("Any validation errors will produce a non-zero return code (1). Only the config")
+		fmt.Println("file at the specified path is validated. If no config file is specified, then")
+		fmt.Println("the first config file discovered in order order of precedence is validated:")
+		fmt.Println("")
+		fmt.Println("- ./connectivity.yml")
+		fmt.Println("- ~/.connectivity.yml")
+		fmt.Println("- /etc/connectivity.yml")
+	}
 }
 
 func ParseDestinations(urls []string) []*Destination {
