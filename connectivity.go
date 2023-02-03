@@ -51,10 +51,10 @@ func PrintUsage() {
 	fmt.Println("Usage: connectivity <command>")
 	fmt.Println("")
 	fmt.Println("Commands:")
-	fmt.Println("  wait				Wait for all connectivity to be verified at least once")
-	fmt.Println("  monitor			Continuously monitor all connectivity forever")
+	fmt.Println("  wait             Wait for all connectivity to be verified at least once")
+	fmt.Println("  monitor          Continuously monitor all connectivity forever")
 	fmt.Println("  validate-config  Load config without making any network requests")
-	fmt.Println("  help				Show this help text")
+	fmt.Println("  help             Show this help text")
 	fmt.Println("")
 	fmt.Println("Use \"connectivity help <command>\" for more information about that command.")
 }
