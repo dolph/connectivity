@@ -1,26 +1,50 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"sync"
 )
 
 func main() {
-	// Configuration
-	exitOnSuccess := os.Getenv("C10Y_WAIT")
+	if len(os.Args) == 1 {
+		PrintUsage()
+		os.Exit(0)
+	}
 
-	// Basic design:
-	// Handoff each URL to a monitoring process that will be in charge of it.
-	// Each URL is pre-processed to understand how it can be validated.
-	// 1. Can it be parsed into a valid URL?
-	// 2. Can it be resolved?
-	// 3. Can the host be pinged or each resolved host:port dialed?
-	// 4. If it can be reached, handoff to a protocol-specific handler that validates application-level connectivity.
-	// 5. Validate the expected outcome. A "permission denied" may be expected from SSH, for example.
+	command := os.Args[1]
 
+	if command == "wait" {
+		config := LoadConfig()
+		destinations := ParseDestinations(config.URLs)
+		WaitForConnectivity(destinations)
+	} else if command == "monitor" {
+		config := LoadConfig()
+		destinations := ParseDestinations(config.URLs)
+		MonitorConnectivityForever(destinations)
+	} else if command == "help" || command == "--help" || command == "-h" {
+		PrintUsage()
+	} else {
+		PrintUsage()
+		os.Exit(1)
+	}
+}
+
+func PrintUsage() {
+	fmt.Println("connectivity is a tool for verifying and debugging network connectivity issues.")
+	fmt.Println("")
+	fmt.Println("Usage: connectivity <command>")
+	fmt.Println("")
+	fmt.Println("Commands:")
+	fmt.Println("  wait     Wait for all connectivity to be verified at least once")
+	fmt.Println("  monitor  Continuously monitor all connectivity forever")
+	fmt.Println("  help     Show this help text")
+}
+
+func ParseDestinations(urls []string) []*Destination {
 	// Validate all destinations before beginning any monitoring
 	var destinations []*Destination
-	for idx, url := range os.Args {
+	for idx, url := range urls {
 		if idx != 0 {
 			dest, err := NewDestination(url)
 			if err != nil {
@@ -29,15 +53,7 @@ func main() {
 			destinations = append(destinations, dest)
 		}
 	}
-
-	// At this point we know that all destinations are valid, so we can start
-	// checking them. Do we want to exit once all checks pass, or run as a
-	// monitor daemon?
-	if exitOnSuccess == "1" {
-		WaitForConnectivity(destinations)
-	} else {
-		MonitorConnectivityForever(destinations)
-	}
+	return destinations
 }
 
 func WaitForConnectivity(destinations []*Destination) {
