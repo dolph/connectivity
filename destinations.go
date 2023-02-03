@@ -29,11 +29,11 @@ func (dest *Destination) String() string {
 	}
 
 	if dest.Username != "" && dest.PasswordSet {
-		return fmt.Sprintf("%s://%s:[...]@%s%s%s", dest.Scheme, dest.Username, dest.Host, port, dest.Path)
+		return fmt.Sprintf("%s://%s:[...]@%s%s%s (%s)", dest.Scheme, dest.Username, dest.Host, port, dest.Path, dest.Protocol)
 	} else if dest.Username != "" && !dest.PasswordSet {
-		return fmt.Sprintf("%s://%s@%s%s%s", dest.Scheme, dest.Username, dest.Host, port, dest.Path)
+		return fmt.Sprintf("%s://%s@%s%s%s (%s)", dest.Scheme, dest.Username, dest.Host, port, dest.Path, dest.Protocol)
 	}
-	return fmt.Sprintf("%s://%s%s%s", dest.Scheme, dest.Host, port, dest.Path)
+	return fmt.Sprintf("%s://%s%s%s (%s)", dest.Scheme, dest.Host, port, dest.Path, dest.Protocol)
 }
 
 func NewDestination(dest string) (*Destination, error) {

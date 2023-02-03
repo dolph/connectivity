@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"sync"
 )
@@ -14,7 +15,11 @@ func main() {
 
 	command := os.Args[1]
 
-	if command == "wait" {
+	if command == "validate-config" {
+		config := LoadConfig()
+		destinations := ParseDestinations(config.URLs)
+		ShowDestinations(destinations)
+	} else if command == "wait" {
 		config := LoadConfig()
 		destinations := ParseDestinations(config.URLs)
 		WaitForConnectivity(destinations)
@@ -36,9 +41,10 @@ func PrintUsage() {
 	fmt.Println("Usage: connectivity <command>")
 	fmt.Println("")
 	fmt.Println("Commands:")
-	fmt.Println("  wait     Wait for all connectivity to be verified at least once")
-	fmt.Println("  monitor  Continuously monitor all connectivity forever")
-	fmt.Println("  help     Show this help text")
+	fmt.Println("  wait				Wait for all connectivity to be verified at least once")
+	fmt.Println("  monitor			Continuously monitor all connectivity forever")
+	fmt.Println("  validate-config  Load config without making any network requests")
+	fmt.Println("  help				Show this help text")
 }
 
 func ParseDestinations(urls []string) []*Destination {
@@ -54,6 +60,17 @@ func ParseDestinations(urls []string) []*Destination {
 		}
 	}
 	return destinations
+}
+
+func ShowDestinations(destinations []*Destination) {
+	if len(destinations) == 0 {
+		log.Print("Failed to parse any destinations.")
+		os.Exit(1)
+	}
+	log.Print("Parsed the following destinations:")
+	for idx, dest := range destinations {
+		log.Printf("%d. %s\n", idx+1, dest)
+	}
 }
 
 func WaitForConnectivity(destinations []*Destination) {
