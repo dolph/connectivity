@@ -27,11 +27,13 @@ func main() {
 		ShowDestinations(destinations)
 	} else if command == "wait" {
 		config := LoadConfig(FindConfig())
-		destinations := ParseDestinations(config.URLs)
+		urls := GetURLs(config)
+		destinations := ParseDestinations(urls)
 		WaitForConnectivity(destinations)
 	} else if command == "monitor" {
 		config := LoadConfig(FindConfig())
-		destinations := ParseDestinations(config.URLs)
+		urls := GetURLs(config)
+		destinations := ParseDestinations(urls)
 		MonitorConnectivityForever(destinations)
 	} else if command == "help" {
 		if len(os.Args) == 3 {
@@ -63,14 +65,14 @@ func PrintCommandUsage(command string) {
 	if command == "wait" {
 		fmt.Println("Wait for all specified connectivity to be verified at least once, and exit.")
 		fmt.Println("")
-		fmt.Println("Usage: connectivity wait")
+		fmt.Println("Usage: connectivity wait [urls]")
 		fmt.Println("")
 		fmt.Println("This is useful when you need to wait for DNS propogation, a process to start")
 		fmt.Println("listening, configuration to be applied, etc, before doing something else.")
 	} else if command == "monitor" {
 		fmt.Println("Continuously monitor all connectivity forever.")
 		fmt.Println("")
-		fmt.Println("Usage: connectivity monitor")
+		fmt.Println("Usage: connectivity monitor [urls]")
 		fmt.Println("")
 		fmt.Println("This is useful to run as a daemon for continuously monitoring network")
 		fmt.Println("dependencies.")
@@ -90,6 +92,13 @@ func PrintCommandUsage(command string) {
 		PrintUsage()
 		os.Exit(1)
 	}
+}
+
+func GetURLs(config *Config) []string {
+	if len(os.Args) > 2 {
+		return os.Args[1:len(os.Args)]
+	}
+	return config.URLs
 }
 
 func ParseDestinations(urls []string) []*Destination {
