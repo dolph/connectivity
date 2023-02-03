@@ -23,12 +23,17 @@ type Destination struct {
 }
 
 func (dest *Destination) String() string {
-	if dest.Username != "" && dest.PasswordSet {
-		return fmt.Sprintf("%s://%s:[...]@%s:%d%s", dest.Scheme, dest.Username, dest.Host, dest.Port, dest.Path)
-	} else if dest.Username != "" && !dest.PasswordSet {
-		return fmt.Sprintf("%s://%s@%s:%d%s", dest.Scheme, dest.Username, dest.Host, dest.Port, dest.Path)
+	port := ""
+	if dest.Port != -1 {
+		port = fmt.Sprintf(":%d", dest.Port)
 	}
-	return fmt.Sprintf("%s://%s:%d%s", dest.Scheme, dest.Host, dest.Port, dest.Path)
+
+	if dest.Username != "" && dest.PasswordSet {
+		return fmt.Sprintf("%s://%s:[...]@%s%s%s", dest.Scheme, dest.Username, dest.Host, port, dest.Path)
+	} else if dest.Username != "" && !dest.PasswordSet {
+		return fmt.Sprintf("%s://%s@%s%s%s", dest.Scheme, dest.Username, dest.Host, port, dest.Path)
+	}
+	return fmt.Sprintf("%s://%s%s%s", dest.Scheme, dest.Host, port, dest.Path)
 }
 
 func NewDestination(dest string) (*Destination, error) {
@@ -62,8 +67,10 @@ func NewDestination(dest string) (*Destination, error) {
 			// If Go adopts support for one of these, this code won't be reached.
 			if scheme == "nats" {
 				portNumber = 4222
+			} else if scheme == "icmp" {
+				portNumber = -1
 			} else {
-				log.Printf("Unsupported scheme (try specifying tcp:// or udp:// and an explicit port) (%s): %s", url, err)
+				log.Printf("Unsupported scheme (try specifying tcp:// or udp:// and an explicit port, or icmp:// for ping-only) (%s): %s", url, err)
 				return nil, err
 			}
 		}
@@ -71,7 +78,7 @@ func NewDestination(dest string) (*Destination, error) {
 
 	// Determine protocol
 	protocol := "tcp"
-	if scheme == "udp" {
+	if scheme == "udp" || scheme == "icmp" {
 		protocol = scheme
 	}
 
@@ -105,7 +112,11 @@ func (dest *Destination) Check() bool {
 		for _, ip := range dnsResults {
 			// Check that this isn't an IPv6 result
 			if !strings.Contains(ip.String(), ":") {
-				reachable = reachable && Dial(dest, ip)
+				if dest.Protocol == "icmp" {
+					reachable = reachable && Ping(dest, ip)
+				} else {
+					reachable = reachable && Dial(dest, ip)
+				}
 			}
 		}
 	}
