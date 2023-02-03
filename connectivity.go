@@ -59,7 +59,7 @@ func PrintUsage() {
 	fmt.Println("Use \"connectivity help <command>\" for more information about that command.")
 }
 
-func PrintCommandUsage() {
+func PrintCommandUsage(command string) {
 	if command == "wait" {
 		fmt.Println("Wait for all specified connectivity to be verified at least once, and exit.")
 		fmt.Println("")
@@ -86,6 +86,9 @@ func PrintCommandUsage() {
 		fmt.Println("- ./connectivity.yml")
 		fmt.Println("- ~/.connectivity.yml")
 		fmt.Println("- /etc/connectivity.yml")
+	} else {
+		PrintUsage()
+		os.Exit(1)
 	}
 }
 
