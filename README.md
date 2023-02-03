@@ -1,6 +1,6 @@
 # `connectivity`
 
-`connectivity` is a tool for verifying and debugging network connectivity issues.
+`connectivity` is a tool for verifying network connectivity requirements.
 
 Given a set of URLs, connectivity attempts to reach each one as thoroughly as
 possible. If a URL contains a hostname, it is first resolved. Each DNS record
