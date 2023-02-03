@@ -48,7 +48,7 @@ func main() {
 }
 
 func PrintUsage() {
-	fmt.Println("connectivity is a tool for verifying network connectivity requirements.")
+	fmt.Println("connectivity is a tool for validating network connectivity requirements.")
 	fmt.Println("")
 	fmt.Println("Usage: connectivity <command>")
 	fmt.Println("")

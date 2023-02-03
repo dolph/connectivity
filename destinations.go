@@ -160,7 +160,7 @@ func (dest *Destination) WaitFor() {
 		reachable := dest.Check()
 
 		if reachable {
-			log.Printf("Connected to %s (%s)", dest, dest.Protocol)
+			log.Printf("Validated %s (%s)", dest, dest.Protocol)
 			return
 		}
 
