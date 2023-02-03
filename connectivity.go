@@ -16,15 +16,21 @@ func main() {
 	command := os.Args[1]
 
 	if command == "validate-config" {
-		config := LoadConfig()
+		var configPath string
+		if len(os.Args) == 3 {
+			configPath = os.Args[2]
+		} else {
+			configPath = FindConfig()
+		}
+		config := LoadConfig(configPath)
 		destinations := ParseDestinations(config.URLs)
 		ShowDestinations(destinations)
 	} else if command == "wait" {
-		config := LoadConfig()
+		config := LoadConfig(FindConfig())
 		destinations := ParseDestinations(config.URLs)
 		WaitForConnectivity(destinations)
 	} else if command == "monitor" {
-		config := LoadConfig()
+		config := LoadConfig(FindConfig())
 		destinations := ParseDestinations(config.URLs)
 		MonitorConnectivityForever(destinations)
 	} else if command == "help" || command == "--help" || command == "-h" {

@@ -28,8 +28,7 @@ func FindConfig() string {
 	return ""
 }
 
-func LoadConfig() *Config {
-	path := FindConfig()
+func LoadConfig(path string) *Config {
 	if path == "" {
 		return &Config{}
 	}
