@@ -30,9 +30,10 @@ func formatTags(tags []string) string {
 	return strings.Join(tags[:], ",")
 }
 
-func StatsdSender() {
+func StatsdSender(config *Config) {
 	for s := range queue {
-		if conn, err := net.Dial("udp", "127.0.0.1:8125"); err == nil {
+		statsdHostPort := fmt.Sprintf("%s:%d", config.statsdHost, config.statsdPort)
+		if conn, err := net.Dial(config.statsdProtocol, statsdHostPort); err == nil {
 			io.WriteString(conn, s)
 			conn.Close()
 		}

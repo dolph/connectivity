@@ -26,20 +26,20 @@ func main() {
 		destinations := ParseDestinations(config.URLs)
 		ShowDestinations(destinations)
 	} else if command == "check" {
-		go StatsdSender()
 		config := LoadConfig(FindConfig())
+		go StatsdSender(config)
 		urls := GetURLs(config)
 		destinations := ParseDestinations(urls)
 		CheckForConnectivityOnce(destinations)
 	} else if command == "wait" {
-		go StatsdSender()
 		config := LoadConfig(FindConfig())
+		go StatsdSender(config)
 		urls := GetURLs(config)
 		destinations := ParseDestinations(urls)
 		WaitForConnectivity(destinations)
 	} else if command == "monitor" {
-		go StatsdSender()
 		config := LoadConfig(FindConfig())
+		go StatsdSender(config)
 		urls := GetURLs(config)
 		destinations := ParseDestinations(urls)
 		MonitorConnectivityForever(destinations)

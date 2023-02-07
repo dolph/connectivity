@@ -8,7 +8,10 @@ import (
 )
 
 type Config struct {
-	URLs []string `yaml:"urls"`
+	statsdHost     string   `yaml:"statsd_host"`
+	statsdPort     int      `yaml:"statsd_port"`
+	statsdProtocol string   `yaml:"statsd_protocol"`
+	URLs           []string `yaml:"urls"`
 }
 
 var ConfigPaths = [6]string{
@@ -46,6 +49,17 @@ func LoadConfig(path string) *Config {
 	err = decoder.Decode(&cfg)
 	if err != nil {
 		log.Fatalf("Failed to parse YAML config file (%s): %v", path, err)
+	}
+
+	// Apply some default values
+	if cfg.statsdHost == "" {
+		cfg.statsdHost = "127.0.0.1"
+	}
+	if cfg.statsdPort == 0 {
+		cfg.statsdPort = 8125
+	}
+	if cfg.statsdProtocol == "" {
+		cfg.statsdProtocol = "udp"
 	}
 
 	return &cfg
