@@ -20,9 +20,8 @@ func Ping(dest *Destination, ip net.IP) bool {
 		return false
 	}
 
-	// TODO: emit stats to statsd. have to keep the pinger around to get stddev
-	// stats := pinger.Statistics()
-	// stats.AvgRtt.Milliseconds()
+	stats := pinger.Statistics()
+	dest.Timer("connectivity.icmp", stats.AvgRtt)
 
 	return true
 }

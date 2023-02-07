@@ -25,12 +25,20 @@ func main() {
 		config := LoadConfig(configPath)
 		destinations := ParseDestinations(config.URLs)
 		ShowDestinations(destinations)
+	} else if command == "check" {
+		go StatsdSender()
+		config := LoadConfig(FindConfig())
+		urls := GetURLs(config)
+		destinations := ParseDestinations(urls)
+		CheckForConnectivityOnce(destinations)
 	} else if command == "wait" {
+		go StatsdSender()
 		config := LoadConfig(FindConfig())
 		urls := GetURLs(config)
 		destinations := ParseDestinations(urls)
 		WaitForConnectivity(destinations)
 	} else if command == "monitor" {
+		go StatsdSender()
 		config := LoadConfig(FindConfig())
 		urls := GetURLs(config)
 		destinations := ParseDestinations(urls)
@@ -53,7 +61,7 @@ func PrintUsage() {
 	fmt.Println("Usage: connectivity <command>")
 	fmt.Println("")
 	fmt.Println("Commands:")
-	fmt.Println("  wait             Wait for all connectivity to be verified at least once")
+	fmt.Println("  wait             Wait for all connectivity to be validated successfully")
 	fmt.Println("  monitor          Continuously monitor all connectivity forever")
 	fmt.Println("  validate-config  Load config without making any network requests")
 	fmt.Println("  help             Show this help text")
@@ -62,22 +70,30 @@ func PrintUsage() {
 }
 
 func PrintCommandUsage(command string) {
-	if command == "wait" {
-		fmt.Println("Wait for all specified connectivity to be verified at least once, and exit.")
+	if command == "check" {
+		fmt.Println("Validate specified connectivity once and exit.")
+		fmt.Println("")
+		fmt.Println("Usage: connectivity check [urls]")
+		fmt.Println("")
+		fmt.Println("This is useful when you want to externally orchestrate other processes by")
+		fmt.Println("quickly validating connectivity.")
+	} else if command == "wait" {
+		fmt.Println("Wait for all specified connectivity to be validated successfully at least once.")
 		fmt.Println("")
 		fmt.Println("Usage: connectivity wait [urls]")
 		fmt.Println("")
 		fmt.Println("This is useful when you need to wait for DNS propogation, a process to start")
-		fmt.Println("listening, configuration to be applied, etc, before doing something else.")
+		fmt.Println("listening, configuration to be applied, etc, before doing something else. The")
+		fmt.Println("results of each check are emitted via statsd.")
 	} else if command == "monitor" {
 		fmt.Println("Continuously monitor all connectivity forever.")
 		fmt.Println("")
 		fmt.Println("Usage: connectivity monitor [urls]")
 		fmt.Println("")
 		fmt.Println("This is useful to run as a daemon for continuously monitoring network")
-		fmt.Println("dependencies.")
+		fmt.Println("dependencies. The results of each check are emitted via statsd.")
 	} else if command == "validate-config" {
-		fmt.Println("Wait for all connectivity to be verified at least once.")
+		fmt.Println("Load config without making any network requests.")
 		fmt.Println("")
 		fmt.Println("Usage: connectivity validate-config [config-path]")
 		fmt.Println("")
@@ -125,6 +141,21 @@ func ShowDestinations(destinations []*Destination) {
 	for idx, dest := range destinations {
 		log.Printf("%d. %s\n", idx+1, dest)
 	}
+}
+
+func CheckForConnectivityOnce(destinations []*Destination) {
+	var wg sync.WaitGroup
+	reachable := make(chan bool)
+	reachable <- true
+	for _, dest := range destinations {
+		wg.Add(1)
+		go func(dest *Destination) {
+			defer wg.Done()
+			dest.Check()
+		}(dest)
+	}
+
+	wg.Wait()
 }
 
 func WaitForConnectivity(destinations []*Destination) {

@@ -36,6 +36,24 @@ func (dest *Destination) String() string {
 	return fmt.Sprintf("%s://%s%s%s (%s)", dest.Scheme, dest.Host, port, dest.Path, dest.Protocol)
 }
 
+func (dest *Destination) tags() []string {
+	return []string{
+		fmt.Sprintf("dest_url:%s", dest.String()),
+		fmt.Sprintf("dest_scheme:%s", dest.Scheme),
+		fmt.Sprintf("dest_host:%s", dest.Host),
+		fmt.Sprintf("dest_port:%d", dest.Port),
+	}
+}
+
+func (dest *Destination) Increment(metric string, tags []string) {
+	tags = append(tags, dest.tags()...)
+	Increment(metric, dest.tags())
+}
+
+func (dest *Destination) Timer(metric string, took time.Duration) {
+	Timer(metric, took, dest.tags())
+}
+
 func NewDestination(dest string) (*Destination, error) {
 	url, err := url.Parse(dest)
 	if err != nil {
@@ -132,9 +150,11 @@ func (dest *Destination) Check() bool {
 
 func (dest *Destination) Monitor() {
 	log.Printf("Monitoring connectivity to %s (%s)", dest, dest.Protocol)
+
 	confidence := 1
 
 	for {
+		dest.Increment("connectivity.check", []string{})
 		reachable := dest.Check()
 
 		if reachable {
@@ -143,6 +163,7 @@ func (dest *Destination) Monitor() {
 				confidence = 10
 			}
 		} else {
+			dest.Increment("connectivity.check.error", []string{})
 			confidence -= 1
 			if confidence < 1 {
 				confidence = 1
@@ -157,11 +178,14 @@ func (dest *Destination) WaitFor() {
 	log.Printf("Waiting for connectivity to %s (%s)", dest, dest.Protocol)
 
 	for {
+		dest.Increment("connectivity.check", []string{})
 		reachable := dest.Check()
 
 		if reachable {
 			log.Printf("Validated %s (%s)", dest, dest.Protocol)
 			return
+		} else {
+			dest.Increment("connectivity.check.error", []string{})
 		}
 
 		time.Sleep(15 * time.Second)
