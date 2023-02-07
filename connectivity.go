@@ -30,7 +30,11 @@ func main() {
 		go StatsdSender(config)
 		urls := GetURLs(config)
 		destinations := ParseDestinations(urls)
-		CheckForConnectivityOnce(destinations)
+		if CheckForConnectivityOnce(destinations) {
+			os.Exit(0)
+		} else {
+			os.Exit(1)
+		}
 	} else if command == "wait" {
 		config := LoadConfig(FindConfig())
 		go StatsdSender(config)
@@ -143,19 +147,22 @@ func ShowDestinations(destinations []*Destination) {
 	}
 }
 
-func CheckForConnectivityOnce(destinations []*Destination) {
+func CheckForConnectivityOnce(destinations []*Destination) bool {
 	var wg sync.WaitGroup
-	reachable := make(chan bool)
-	reachable <- true
+	reachable := true
+	ch := make(chan bool)
 	for _, dest := range destinations {
 		wg.Add(1)
-		go func(dest *Destination) {
+		go func(dest *Destination, ch chan bool) {
 			defer wg.Done()
-			dest.Check()
-		}(dest)
+			ch <- dest.Check()
+		}(dest, ch)
+		reachable = reachable && <-ch
 	}
 
 	wg.Wait()
+
+	return reachable
 }
 
 func WaitForConnectivity(destinations []*Destination) {
