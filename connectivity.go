@@ -148,25 +148,33 @@ func ShowDestinations(destinations []*Destination) {
 }
 
 func CheckForConnectivityOnce(destinations []*Destination) bool {
-	var wg sync.WaitGroup
-	reachable := true
-	ch := make(chan bool)
-	for _, dest := range destinations {
-		wg.Add(1)
-		go func(dest *Destination, ch chan bool) {
-			defer wg.Done()
+	chanOwner := func(dest *Destination) <-chan bool {
+		ch := make(chan bool)
+		go func(dest *Destination) {
+			defer close(ch)
 			ch <- dest.Check()
-		}(dest, ch)
+		}(dest)
+		return ch
 	}
 
-	// Read back from channel
-	for range destinations {
-		reachable = reachable && <-ch
+	consumer := func(ch <-chan bool) bool {
+		return <-ch
 	}
 
-	wg.Wait()
+	results := []bool{}
+	for _, dest := range destinations {
+		results = append(results, consumer(chanOwner(dest)))
+	}
 
-	return reachable
+	fmt.Println(results)
+
+	for _, result := range results {
+		if !result {
+			return false
+		}
+	}
+
+	return true
 }
 
 func WaitForConnectivity(destinations []*Destination) {
