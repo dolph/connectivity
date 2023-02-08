@@ -166,8 +166,6 @@ func CheckForConnectivityOnce(destinations []*Destination) bool {
 		results = append(results, consumer(chanOwner(dest)))
 	}
 
-	fmt.Println(results)
-
 	for _, result := range results {
 		if !result {
 			return false
