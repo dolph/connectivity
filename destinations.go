@@ -47,7 +47,7 @@ func (dest *Destination) tags() []string {
 
 func (dest *Destination) Increment(metric string, tags []string) {
 	tags = append(tags, dest.tags()...)
-	Increment(metric, dest.tags())
+	Increment(metric, tags)
 }
 
 func (dest *Destination) Timer(metric string, took time.Duration) {

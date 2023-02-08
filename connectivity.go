@@ -157,6 +157,10 @@ func CheckForConnectivityOnce(destinations []*Destination) bool {
 			defer wg.Done()
 			ch <- dest.Check()
 		}(dest, ch)
+	}
+
+	// Read back from channel
+	for range destinations {
 		reachable = reachable && <-ch
 	}
 

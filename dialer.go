@@ -10,7 +10,7 @@ import (
 // if succcessful. This ensures we have a network path to the destination, and
 // can be used to ensure that individual records in a DNS response are available.
 func Dial(dest *Destination, ip net.IP) bool {
-	metricTags := []string{fmt.Sprintf("ip:%s", ip.String())}
+	metricTags := []string{fmt.Sprintf("dest_ip:%s", ip.String())}
 	hostPort := fmt.Sprintf("%s:%d", ip.String(), dest.Port)
 
 	// Check destination IP for routability
