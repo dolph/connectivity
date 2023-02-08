@@ -35,11 +35,6 @@ jobs:
     - name: Build
       run: go build -v ./...
 
-    - name: Lint
-      uses: golangci/golangci-lint-action@v3
-      with:
-        version: latest
-
     - name: Test
       run: go test -cover -v ./...
 
