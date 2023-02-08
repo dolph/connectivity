@@ -1,16 +1,21 @@
-name: Build & Release
+name: Go
 
 on:
   push:
+    tags:
+      - v*
     branches:
     - main
+    - master
   pull_request:
     branches:
     - main
+    - master
   create:
 
 permissions:
   contents: write
+  pull-requests: read
 
 jobs:
   build:
@@ -28,6 +33,11 @@ jobs:
 
     - name: Build
       run: go build -v ./...
+
+    - name: Lint
+      uses: golangci/golangci-lint-action@v3
+      with:
+        version: latest
 
     - name: Test
       run: go test -cover -v ./...
