@@ -161,9 +161,16 @@ func CheckForConnectivityOnce(destinations []*Destination) bool {
 		return <-ch
 	}
 
-	results := []bool{}
+	// Call all channel owners
+	checks := []<-chan bool{}
 	for _, dest := range destinations {
-		results = append(results, consumer(chanOwner(dest)))
+		checks = append(checks, chanOwner(dest))
+	}
+
+	// Collect results from consumers
+	results := []bool{}
+	for _, check := range checks {
+		results = append(results, consumer(check))
 	}
 
 	for _, result := range results {
