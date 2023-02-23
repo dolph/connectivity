@@ -65,6 +65,7 @@ func PrintUsage() {
 	fmt.Println("Usage: connectivity <command>")
 	fmt.Println("")
 	fmt.Println("Commands:")
+	fmt.Println("  check            Check all connectivity once and exit")
 	fmt.Println("  wait             Wait for all connectivity to be validated successfully")
 	fmt.Println("  monitor          Continuously monitor all connectivity forever")
 	fmt.Println("  validate-config  Load config without making any network requests")
@@ -81,7 +82,7 @@ func PrintCommandUsage(command string) {
 		fmt.Println("")
 		fmt.Println("This is useful when you want to externally orchestrate other processes by")
 		fmt.Println("quickly validating connectivity.")
-	} else if command == "wait" {
+	} else if command == "wait" || command == "waitfor" {
 		fmt.Println("Wait for all specified connectivity to be validated successfully at least once.")
 		fmt.Println("")
 		fmt.Println("Usage: connectivity wait [urls]")
