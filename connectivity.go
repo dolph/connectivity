@@ -47,6 +47,8 @@ func main() {
 		urls := GetURLs(config)
 		destinations := ParseDestinations(urls)
 		MonitorConnectivityForever(destinations)
+	} else if command == "version" {
+		PrintVersion()
 	} else if command == "help" {
 		if len(os.Args) == 3 {
 			PrintCommandUsage(os.Args[2])
@@ -69,9 +71,30 @@ func PrintUsage() {
 	fmt.Println("  wait             Wait for all connectivity to be validated successfully")
 	fmt.Println("  monitor          Continuously monitor all connectivity forever")
 	fmt.Println("  validate-config  Load config without making any network requests")
+	fmt.Println("  version          Show version information")
 	fmt.Println("  help             Show this help text")
 	fmt.Println("")
 	fmt.Println("Use \"connectivity help <command>\" for more information about that command.")
+}
+
+var GitTag string
+var GitCommit string
+var GoVersion string
+var BuildTimestamp string
+var BuildOS string
+var BuildArch string
+var BuildTainted string
+
+func PrintVersion() {
+	if BuildTainted == "true" {
+		fmt.Printf("Version: %s (tainted)\n", GitTag)
+	} else {
+		fmt.Printf("Version: %s\n", GitTag)
+	}
+	fmt.Printf("Commit SHA: %s\n", GitCommit)
+	fmt.Printf("Go Version: %s\n", GoVersion)
+	fmt.Printf("Built: %s\n", BuildTimestamp)
+	fmt.Printf("OS/Arch: %s/%s\n", BuildOS, BuildArch)
 }
 
 func PrintCommandUsage(command string) {
@@ -97,6 +120,10 @@ func PrintCommandUsage(command string) {
 		fmt.Println("")
 		fmt.Println("This is useful to run as a daemon for continuously monitoring network")
 		fmt.Println("dependencies. The results of each check are emitted via statsd.")
+	} else if command == "version" {
+		fmt.Println("Show version information about this build")
+		fmt.Println("")
+		fmt.Println("Usage: connectivity version")
 	} else if command == "validate-config" {
 		fmt.Println("Load config without making any network requests.")
 		fmt.Println("")

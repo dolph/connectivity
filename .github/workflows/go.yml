@@ -33,7 +33,7 @@ jobs:
       run: go vet
 
     - name: Build
-      run: go build -v ./...
+      run: ./build.sh
 
     - name: Test
       run: go test -cover -v ./...
