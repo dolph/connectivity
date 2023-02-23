@@ -34,7 +34,7 @@ func main() {
 		} else {
 			os.Exit(1)
 		}
-	} else if command == "wait" {
+	} else if command == "wait" || command == "waitfor" {
 		config := LoadConfig(FindConfig())
 		go StatsdSender(config)
 		urls := GetURLs(config)

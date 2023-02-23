@@ -53,7 +53,7 @@ func PrintCommandUsage(command string) {
 	} else if command == "wait" || command == "waitfor" {
 		fmt.Println("Wait for all specified connectivity to be validated successfully at least once.")
 		fmt.Println("")
-		fmt.Println("Usage: connectivity wait [urls]")
+		fmt.Println("Usage: connectivity [wait|waitfor] [urls]")
 		fmt.Println("")
 		fmt.Println("This is useful when you need to wait for DNS propogation, a process to start")
 		fmt.Println("listening, configuration to be applied, etc, before doing something else. The")
