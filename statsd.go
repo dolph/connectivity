@@ -32,8 +32,8 @@ func formatTags(tags []string) string {
 
 func StatsdSender(config *Config) {
 	for s := range queue {
-		statsdHostPort := fmt.Sprintf("%s:%d", config.statsdHost, config.statsdPort)
-		if conn, err := net.Dial(config.statsdProtocol, statsdHostPort); err == nil {
+		statsdHostPort := fmt.Sprintf("%s:%d", config.StatsdHost, config.StatsdPort)
+		if conn, err := net.Dial(config.StatsdProtocol, statsdHostPort); err == nil {
 			io.WriteString(conn, s)
 			conn.Close()
 		}

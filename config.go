@@ -8,9 +8,9 @@ import (
 )
 
 type Config struct {
-	statsdHost     string   `yaml:"statsd_host"`
-	statsdPort     int      `yaml:"statsd_port"`
-	statsdProtocol string   `yaml:"statsd_protocol"`
+	StatsdHost     string   `yaml:"statsd_host"`
+	StatsdPort     int      `yaml:"statsd_port"`
+	StatsdProtocol string   `yaml:"statsd_protocol"`
 	URLs           []string `yaml:"urls"`
 }
 
@@ -52,14 +52,14 @@ func LoadConfig(path string) *Config {
 	}
 
 	// Apply some default values
-	if cfg.statsdHost == "" {
-		cfg.statsdHost = "127.0.0.1"
+	if cfg.StatsdHost == "" {
+		cfg.StatsdHost = "127.0.0.1"
 	}
-	if cfg.statsdPort == 0 {
-		cfg.statsdPort = 8125
+	if cfg.StatsdPort == 0 {
+		cfg.StatsdPort = 8125
 	}
-	if cfg.statsdProtocol == "" {
-		cfg.statsdProtocol = "udp"
+	if cfg.StatsdProtocol == "" {
+		cfg.StatsdProtocol = "udp"
 	}
 
 	return &cfg
