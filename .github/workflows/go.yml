@@ -29,14 +29,8 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v3
 
-    - name: Vet
-      run: go vet
-
-    - name: Build
+    - name: Build & Test
       run: ./build.sh
-
-    - name: Test
-      run: go test -cover -v ./...
 
     - name: Release
       uses: softprops/action-gh-release@v1

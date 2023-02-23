@@ -1,5 +1,10 @@
 #!/bin/bash
 set -x
+
+# Vet
+go vet
+
+# Build
 GIT_COMMIT="$(git rev-parse --short $(git rev-list -1 HEAD))"
 GIT_TAG="$(git tag --points-at HEAD)"
 GO_VERSION="$(go version | cut -d' ' -f3)"
@@ -21,3 +26,6 @@ go build \
         -X 'main.BuildArch=$BUILD_ARCH' \
         -X 'main.BuildTainted=$BUILD_TAINTED'" \
     ./...
+
+# Test
+go test -cover -v ./...
