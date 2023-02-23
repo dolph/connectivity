@@ -23,17 +23,29 @@ type Destination struct {
 }
 
 func (dest *Destination) String() string {
-	port := ""
-	if dest.Port != -1 {
-		port = fmt.Sprintf(":%d", dest.Port)
+	s := fmt.Sprintf("%s://", dest.Scheme)
+
+	// Suppress passwords if one is provided
+	if dest.Username != "" && dest.PasswordSet {
+		s += fmt.Sprintf("%s:[...]@", dest.Username)
+	} else if dest.Username != "" && !dest.PasswordSet {
+		s += fmt.Sprintf("%s@", dest.Username)
 	}
 
-	if dest.Username != "" && dest.PasswordSet {
-		return fmt.Sprintf("%s://%s:[...]@%s%s%s (%s)", dest.Scheme, dest.Username, dest.Host, port, dest.Path, dest.Protocol)
-	} else if dest.Username != "" && !dest.PasswordSet {
-		return fmt.Sprintf("%s://%s@%s%s%s (%s)", dest.Scheme, dest.Username, dest.Host, port, dest.Path, dest.Protocol)
+	s += fmt.Sprintf("%s", dest.Host)
+
+	// The port is -1 in the case of icmp:// where it's not relevant
+	if dest.Port != -1 {
+		s += fmt.Sprintf(":%d", dest.Port)
 	}
-	return fmt.Sprintf("%s://%s%s%s (%s)", dest.Scheme, dest.Host, port, dest.Path, dest.Protocol)
+
+	s += fmt.Sprintf("%s", dest.Path)
+
+	if dest.Scheme != dest.Protocol {
+		s += fmt.Sprintf(" (%s)", dest.Protocol)
+	}
+
+	return s
 }
 
 func (dest *Destination) tags() []string {
@@ -122,7 +134,7 @@ func (dest *Destination) Check() bool {
 
 	dnsResults, err := Lookup(dest)
 	if err != nil {
-		log.Printf("%s Failed to resolve %s (%v)", GetLocalIPs(), dest.Host, err)
+		log.Printf("%s Failed to resolve %s (%v) for %v", GetLocalIPs(), dest.Host, err, dest)
 		reachable = false
 	}
 
@@ -149,7 +161,7 @@ func (dest *Destination) Check() bool {
 }
 
 func (dest *Destination) Monitor() {
-	log.Printf("Monitoring connectivity to %s (%s)", dest, dest.Protocol)
+	log.Printf("Monitoring connectivity to %v", dest)
 
 	confidence := 1
 
@@ -175,14 +187,14 @@ func (dest *Destination) Monitor() {
 }
 
 func (dest *Destination) WaitFor() {
-	log.Printf("Waiting for connectivity to %s (%s)", dest, dest.Protocol)
+	log.Printf("Waiting for connectivity to %v", dest)
 
 	for {
 		dest.Increment("connectivity.check", []string{})
 		reachable := dest.Check()
 
 		if reachable {
-			log.Printf("Validated %s (%s)", dest, dest.Protocol)
+			log.Printf("Validated %v", dest)
 			return
 		} else {
 			dest.Increment("connectivity.check.error", []string{})

@@ -16,7 +16,7 @@ func Dial(dest *Destination, ip net.IP) bool {
 	// Check destination IP for routability
 	route, err := GetRoute(ip)
 	if err != nil {
-		log.Printf("Failed to route to %s (%v)", ip.String(), err)
+		log.Printf("Failed to route to %s (%v) for %v", ip.String(), err, dest)
 		return false
 	}
 
@@ -25,7 +25,7 @@ func Dial(dest *Destination, ip net.IP) bool {
 	conn, err := net.Dial(dest.Protocol, hostPort)
 	if err != nil {
 		dest.Increment("connectivity.dial.error", metricTags)
-		log.Printf("%s Failed to %v", route, err)
+		log.Printf("%s Failed to %v for %v", route, err, dest)
 		return false
 	}
 	defer conn.Close()
