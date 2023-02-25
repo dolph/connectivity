@@ -76,15 +76,21 @@ func GetURLs(config *Config) []Url {
 
 func ParseDestinations(urls []Url) []*Destination {
 	// Validate all destinations before beginning any monitoring
+	errEncountered := false
 	var destinations []*Destination
 	for idx, url := range urls {
 		if idx != 0 {
 			dest, err := NewDestination(url)
 			if err != nil {
-				os.Exit(2)
+				log.Printf("%v", err)
+				errEncountered = true
+			} else {
+				destinations = append(destinations, dest)
 			}
-			destinations = append(destinations, dest)
 		}
+	}
+	if errEncountered {
+		os.Exit(2)
 	}
 	return destinations
 }

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"net"
@@ -74,15 +75,13 @@ func (dest *Destination) Timer(metric string, took time.Duration) {
 func NewDestination(dest Url) (*Destination, error) {
 	url, err := url.Parse(dest.Url)
 	if err != nil {
-		log.Printf("[%s] Failed to parse URL: %s", dest.Label, err)
-		return nil, err
+		return nil, errors.New(fmt.Sprintf("[%s] Failed to parse URL: %s", dest.Label, err))
 	}
 
 	// Determine host
 	host := url.Hostname()
 	if host == "" {
-		log.Printf("[%s] Failed to parse a host in URL: %s", dest.Label, err)
-		return nil, err
+		return nil, errors.New(fmt.Sprintf("[%s] Failed to parse a host in URL: %s", dest.Label, err))
 	}
 
 	// Determine scheme
@@ -105,8 +104,7 @@ func NewDestination(dest Url) (*Destination, error) {
 			} else if scheme == "icmp" {
 				portNumber = -1
 			} else {
-				log.Printf("[%s] Unsupported scheme (try specifying tcp:// or udp:// and an explicit port, or icmp:// for ping-only): %s", dest.Label, err)
-				return nil, err
+				return nil, errors.New(fmt.Sprintf("[%s] Unsupported scheme (try specifying tcp:// or udp:// and an explicit port, or icmp:// for ping-only): %s", dest.Label, err))
 			}
 		}
 	}
