@@ -1,6 +1,7 @@
 package main
 
 import (
+	"io/ioutil"
 	"log"
 	"os"
 
@@ -8,10 +9,15 @@ import (
 )
 
 type Config struct {
-	StatsdHost     string   `yaml:"statsd_host"`
-	StatsdPort     int      `yaml:"statsd_port"`
-	StatsdProtocol string   `yaml:"statsd_protocol"`
-	URLs           []string `yaml:"urls"`
+	StatsdHost     string `yaml:"statsd_host"`
+	StatsdPort     int    `yaml:"statsd_port"`
+	StatsdProtocol string `yaml:"statsd_protocol"`
+	URLs           []Url
+}
+
+type Url struct {
+	Label string `yaml:"-"`
+	Url   string `yaml:"-"`
 }
 
 var ConfigPaths = [6]string{
@@ -36,31 +42,36 @@ func LoadConfig(path string) *Config {
 		return &Config{}
 	}
 
-	f, err := os.Open(path)
+	f, err := ioutil.ReadFile(path)
 	if err != nil {
 		log.Fatalf("Failed to open config file (%s): %v", path, err)
 	}
-	defer f.Close()
 
 	log.Printf("Loading config from %s", path)
 
-	var cfg Config
-	decoder := yaml.NewDecoder(f)
-	err = decoder.Decode(&cfg)
+	var configMap map[string]string
+	err = yaml.Unmarshal(f, &configMap)
 	if err != nil {
 		log.Fatalf("Failed to parse YAML config file (%s): %v", path, err)
 	}
 
+	var cfg Config
+
+	// Extract the URL labels & values from the struct
+	for k, v := range configMap {
+		cfg.URLs = append(cfg.URLs, Url{Label: k, Url: v})
+	}
+
 	// Apply some default values
-	if cfg.StatsdHost == "" {
-		cfg.StatsdHost = "127.0.0.1"
-	}
-	if cfg.StatsdPort == 0 {
-		cfg.StatsdPort = 8125
-	}
-	if cfg.StatsdProtocol == "" {
-		cfg.StatsdProtocol = "udp"
-	}
+	// if cfg.StatsdHost == "" {
+	// 	cfg.StatsdHost = "127.0.0.1"
+	// }
+	// if cfg.StatsdPort == 0 {
+	// 	cfg.StatsdPort = 8125
+	// }
+	// if cfg.StatsdProtocol == "" {
+	// 	cfg.StatsdProtocol = "udp"
+	// }
 
 	return &cfg
 }

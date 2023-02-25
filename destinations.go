@@ -11,6 +11,7 @@ import (
 )
 
 type Destination struct {
+	Label       string
 	URL         string
 	Protocol    string
 	Scheme      string
@@ -23,6 +24,10 @@ type Destination struct {
 }
 
 func (dest *Destination) String() string {
+	return fmt.Sprintf("[%s]", dest.Label)
+}
+
+func (dest *Destination) UrlString() string {
 	s := fmt.Sprintf("%s://", dest.Scheme)
 
 	// Suppress passwords if one is provided
@@ -66,17 +71,17 @@ func (dest *Destination) Timer(metric string, took time.Duration) {
 	Timer(metric, took, dest.tags())
 }
 
-func NewDestination(dest string) (*Destination, error) {
-	url, err := url.Parse(dest)
+func NewDestination(dest Url) (*Destination, error) {
+	url, err := url.Parse(dest.Url)
 	if err != nil {
-		log.Printf("Failed to parse URL (%s): %s", url, err)
+		log.Printf("[%s] Failed to parse URL: %s", dest.Label, err)
 		return nil, err
 	}
 
 	// Determine host
 	host := url.Hostname()
 	if host == "" {
-		log.Printf("Failed to parse a host in URL (%s): %s", url, err)
+		log.Printf("[%s] Failed to parse a host in URL: %s", dest.Label, err)
 		return nil, err
 	}
 
@@ -100,7 +105,7 @@ func NewDestination(dest string) (*Destination, error) {
 			} else if scheme == "icmp" {
 				portNumber = -1
 			} else {
-				log.Printf("Unsupported scheme (try specifying tcp:// or udp:// and an explicit port, or icmp:// for ping-only) (%s): %s", url, err)
+				log.Printf("[%s] Unsupported scheme (try specifying tcp:// or udp:// and an explicit port, or icmp:// for ping-only): %s", dest.Label, err)
 				return nil, err
 			}
 		}
@@ -116,7 +121,8 @@ func NewDestination(dest string) (*Destination, error) {
 	password, passwordSet := url.User.Password()
 
 	return &Destination{
-			URL:         dest,
+			Label:       dest.Label,
+			URL:         dest.Url,
 			Protocol:    protocol,
 			Scheme:      scheme,
 			Username:    username,
@@ -134,7 +140,7 @@ func (dest *Destination) Check() bool {
 
 	dnsResults, err := Lookup(dest)
 	if err != nil {
-		log.Printf("%s Failed to resolve %s (%v) for %v", GetLocalIPs(), dest.Host, err, dest)
+		log.Printf("%s%s Failed to resolve host: %v", GetLocalIPs(), dest, err)
 		reachable = false
 	}
 

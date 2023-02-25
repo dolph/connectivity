@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"os"
+	"strconv"
 	"sync"
 )
 
@@ -60,14 +61,20 @@ func main() {
 	}
 }
 
-func GetURLs(config *Config) []string {
+func GetURLs(config *Config) []Url {
 	if len(os.Args) > 2 {
-		return os.Args[1:len(os.Args)]
+		urls := []Url{}
+		urlStrings := os.Args[1:len(os.Args)]
+		for idx, url := range urlStrings {
+			urls = append(urls, Url{
+				Label: strconv.Itoa(idx),
+				Url:   url})
+		}
 	}
 	return config.URLs
 }
 
-func ParseDestinations(urls []string) []*Destination {
+func ParseDestinations(urls []Url) []*Destination {
 	// Validate all destinations before beginning any monitoring
 	var destinations []*Destination
 	for idx, url := range urls {
@@ -84,12 +91,12 @@ func ParseDestinations(urls []string) []*Destination {
 
 func ShowDestinations(destinations []*Destination) {
 	if len(destinations) == 0 {
-		log.Print("Failed to parse any destinations.")
+		log.Print("Failed to parse any destinations")
 		os.Exit(1)
 	}
 	log.Print("Parsed the following destinations:")
 	for idx, dest := range destinations {
-		log.Printf("%d. %s\n", idx+1, dest)
+		log.Printf("%d %s %s\n", idx+1, dest, dest.UrlString())
 	}
 }
 

@@ -35,7 +35,7 @@ func assertError(t *testing.T, got *Destination, err error) {
 }
 
 func TestMinimalHttpUrl(t *testing.T) {
-	got, err := NewDestination("http://host")
+	got, err := NewDestination(Url{Label: "host", Url: "http://host"})
 	assertNoError(t, got, err)
 	assertSchemeEquals(t, got, "http")
 	assertHostEquals(t, got, "host")
@@ -43,7 +43,7 @@ func TestMinimalHttpUrl(t *testing.T) {
 }
 
 func TestMinimalHttpsUrl(t *testing.T) {
-	got, err := NewDestination("https://host")
+	got, err := NewDestination(Url{Label: "host", Url: "https://host"})
 	assertNoError(t, got, err)
 	assertSchemeEquals(t, got, "https")
 	assertHostEquals(t, got, "host")
@@ -51,7 +51,7 @@ func TestMinimalHttpsUrl(t *testing.T) {
 }
 
 func TestMinimalMysqlUrl(t *testing.T) {
-	got, err := NewDestination("mysql://host")
+	got, err := NewDestination(Url{Label: "mysql_host", Url: "mysql://host"})
 	assertNoError(t, got, err)
 	assertSchemeEquals(t, got, "mysql")
 	assertHostEquals(t, got, "host")
@@ -59,7 +59,7 @@ func TestMinimalMysqlUrl(t *testing.T) {
 }
 
 func TestMinimalPostgresUrl(t *testing.T) {
-	got, err := NewDestination("postgres://host")
+	got, err := NewDestination(Url{Label: "postgres_host", Url: "postgres://host"})
 	assertNoError(t, got, err)
 	assertSchemeEquals(t, got, "postgres")
 	assertHostEquals(t, got, "host")
@@ -67,7 +67,7 @@ func TestMinimalPostgresUrl(t *testing.T) {
 }
 
 func TestMinimalNatsUrl(t *testing.T) {
-	got, err := NewDestination("nats://host")
+	got, err := NewDestination(Url{Label: "nats_host", Url: "nats://host"})
 	assertNoError(t, got, err)
 	assertSchemeEquals(t, got, "nats")
 	assertHostEquals(t, got, "host")
@@ -75,7 +75,7 @@ func TestMinimalNatsUrl(t *testing.T) {
 }
 
 func TestSchemeNormalization(t *testing.T) {
-	got, err := NewDestination("HTtP://host")
+	got, err := NewDestination(Url{Label: "schemy_host", Url: "HTtP://host"})
 	assertNoError(t, got, err)
 	assertSchemeEquals(t, got, "http")
 	assertHostEquals(t, got, "host")
@@ -83,12 +83,12 @@ func TestSchemeNormalization(t *testing.T) {
 }
 
 func TestTcpUrlWithoutPort(t *testing.T) {
-	got, err := NewDestination("tcp://host")
+	got, err := NewDestination(Url{Label: "tcp_host", Url: "tcp://host"})
 	assertError(t, got, err)
 }
 
 func TestTcpUrlWithPort(t *testing.T) {
-	got, err := NewDestination("tcp://host:123")
+	got, err := NewDestination(Url{Label: "tcp_host", Url: "tcp://host:123"})
 	assertNoError(t, got, err)
 	assertSchemeEquals(t, got, "tcp")
 	assertHostEquals(t, got, "host")
@@ -96,12 +96,12 @@ func TestTcpUrlWithPort(t *testing.T) {
 }
 
 func TestUdpUrlWithoutPort(t *testing.T) {
-	got, err := NewDestination("udp://host")
+	got, err := NewDestination(Url{Label: "udp_host", Url: "udp://host"})
 	assertError(t, got, err)
 }
 
 func TestUdpUrlWithPort(t *testing.T) {
-	got, err := NewDestination("udp://host:123")
+	got, err := NewDestination(Url{Label: "udp_host", Url: "udp://host:123"})
 	assertNoError(t, got, err)
 	assertSchemeEquals(t, got, "udp")
 	assertHostEquals(t, got, "host")
