@@ -24,7 +24,7 @@ type Destination struct {
 	Path        string
 }
 
-func (dest *Destination) String() string {
+func (dest Destination) String() string {
 	return fmt.Sprintf(" %s:", dest.Label)
 }
 
@@ -72,16 +72,16 @@ func (dest *Destination) Timer(metric string, took time.Duration) {
 	Timer(metric, took, dest.tags())
 }
 
-func NewDestination(dest Url) (*Destination, error) {
-	url, err := url.Parse(dest.Url)
+func NewDestination(u Url) (*Destination, error) {
+	url, err := url.Parse(u.Url)
 	if err != nil {
-		return nil, errors.New(fmt.Sprintf("%s Failed to parse URL: %s", dest, err))
+		return nil, errors.New(fmt.Sprintf("%v: Failed to parse URL: %v", u, err))
 	}
 
 	// Determine host
 	host := url.Hostname()
 	if host == "" {
-		return nil, errors.New(fmt.Sprintf("%s Failed to parse a host in URL: %s", dest, err))
+		return nil, errors.New(fmt.Sprintf("%v: Failed to parse a host in URL: %v", u, u.Url))
 	}
 
 	// Determine scheme
@@ -104,7 +104,7 @@ func NewDestination(dest Url) (*Destination, error) {
 			} else if scheme == "icmp" {
 				portNumber = -1
 			} else {
-				return nil, errors.New(fmt.Sprintf("%s Unsupported scheme (try specifying tcp:// or udp:// and an explicit port, or icmp:// for ping-only): %s", dest, err))
+				return nil, errors.New(fmt.Sprintf("%s: Unsupported scheme (try specifying tcp:// or udp:// and an explicit port, or icmp:// for ping-only): %s", u, err))
 			}
 		}
 	}
@@ -119,8 +119,8 @@ func NewDestination(dest Url) (*Destination, error) {
 	password, passwordSet := url.User.Password()
 
 	return &Destination{
-			Label:       dest.Label,
-			URL:         dest.Url,
+			Label:       u.Label,
+			URL:         u.Url,
 			Protocol:    protocol,
 			Scheme:      scheme,
 			Username:    username,
@@ -138,7 +138,7 @@ func (dest *Destination) Check() bool {
 
 	dnsResults, err := Lookup(dest)
 	if err != nil {
-		log.Printf("%s%s Failed to resolve host: %v", GetLocalIPs(), dest, err)
+		log.Printf("%v%v Failed to resolve host: %v", GetLocalIPs(), dest, err)
 		reachable = false
 	}
 
@@ -149,7 +149,7 @@ func (dest *Destination) Check() bool {
 				// Check destination IP for routability
 				route, err := GetRoute(ip)
 				if err != nil {
-					log.Printf("%s Failed to route to %s: %v", dest, ip.String(), err)
+					log.Printf("%v%v Failed to route to %s: %v", GetLocalIPs(), dest, ip.String(), err)
 					return false
 				}
 
@@ -172,7 +172,7 @@ func (dest *Destination) Check() bool {
 }
 
 func (dest *Destination) Monitor() {
-	log.Printf("%v Monitoring connectivity to %v", dest, dest.UrlString())
+	log.Printf("%v%v Monitoring connectivity to %v", GetLocalIPs(), dest, dest.UrlString())
 
 	confidence := 1
 

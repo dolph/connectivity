@@ -21,6 +21,10 @@ type Url struct {
 	Url   string `yaml:"-"`
 }
 
+func (u Url) String() string {
+	return u.Label
+}
+
 var ConfigPaths = [6]string{
 	"connectivity.yml",
 	"connectivity.yaml",

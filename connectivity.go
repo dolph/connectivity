@@ -91,7 +91,7 @@ func ParseDestinations(urls []Url) []*Destination {
 		if idx != 0 {
 			dest, err := NewDestination(url)
 			if err != nil {
-				log.Printf("%v", err)
+				log.Printf("%s", err)
 				errEncountered = true
 			} else {
 				destinations = append(destinations, dest)
