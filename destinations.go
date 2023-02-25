@@ -146,10 +146,17 @@ func (dest *Destination) Check() bool {
 		for _, ip := range dnsResults {
 			// Check that this isn't an IPv6 result
 			if !strings.Contains(ip.String(), ":") {
+				// Check destination IP for routability
+				route, err := GetRoute(ip)
+				if err != nil {
+					log.Printf("%s Failed to route to %s: %v", dest, ip.String(), err)
+					return false
+				}
+
 				if dest.Protocol == "icmp" {
-					reachable = reachable && Ping(dest, ip)
+					reachable = reachable && Ping(route, dest, ip)
 				} else {
-					reachable = reachable && Dial(dest, ip)
+					reachable = reachable && Dial(route, dest, ip)
 				}
 			}
 		}
