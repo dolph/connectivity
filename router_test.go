@@ -32,7 +32,7 @@ func assertRouteStringEquals(t *testing.T, got *Route, want string) {
 	}
 }
 func assertRoutable(t *testing.T, got *Route) {
-	if strings.Count(got.String(), "->") != 2 {
+	if strings.Count(got.String(), "›") != 1 || strings.Count(got.String(), "»") != 1 {
 		t.Errorf("Route.String() = %s; want a hop before destination", got.String())
 	}
 	if got.SourceIP.String() == got.GatewayIP.String() {

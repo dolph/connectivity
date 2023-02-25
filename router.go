@@ -22,7 +22,7 @@ func (r *Route) String() string {
 		// If the source and destination are the same, the route is trivial.
 		return fmt.Sprintf("[%s][%s][%s]", r.SourceHostname, r.SourceInterfaceName, r.DestinationIP)
 	} else {
-		return fmt.Sprintf("[%s][%s][%s][%s->%s->%s]", r.SourceHostname, r.SourceInterfaceName, r.SourceHardwareAddress, r.SourceIP, r.GatewayIP, r.DestinationIP)
+		return fmt.Sprintf("[%s][%s][%s][%s › %s » %s]", r.SourceHostname, r.SourceInterfaceName, r.SourceHardwareAddress, r.SourceIP, r.GatewayIP, r.DestinationIP)
 	}
 }
 
