@@ -25,7 +25,7 @@ type Destination struct {
 }
 
 func (dest *Destination) String() string {
-	return fmt.Sprintf("[%s]", dest.Label)
+	return fmt.Sprintf(" %s:", dest.Label)
 }
 
 func (dest *Destination) UrlString() string {
@@ -198,14 +198,14 @@ func (dest *Destination) Monitor() {
 }
 
 func (dest *Destination) WaitFor() {
-	log.Printf("Waiting for connectivity to %v", dest)
+	log.Printf("%s Waiting for connectivity to %v", GetLocalIPs(), dest)
 
 	for {
 		dest.Increment("connectivity.check", []string{})
 		reachable := dest.Check()
 
 		if reachable {
-			log.Printf("Validated %v", dest)
+			log.Printf("%s Validated %v", GetLocalIPs(), dest)
 			return
 		} else {
 			dest.Increment("connectivity.check.error", []string{})
