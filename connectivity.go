@@ -120,7 +120,11 @@ func CheckForConnectivityOnce(destinations []*Destination) bool {
 		ch := make(chan bool)
 		go func(dest *Destination) {
 			defer close(ch)
-			ch <- dest.Check()
+			reachable := dest.Check()
+			if reachable {
+				log.Printf("%v%v Validated", GetLocalIPs(), dest)
+			}
+			ch <- reachable
 		}(dest)
 		return ch
 	}
