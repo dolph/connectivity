@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"io/ioutil"
 	"log"
 	"os"
@@ -28,14 +29,13 @@ var ConfigPaths = [6]string{
 	"/etc/connectivity.yml",
 	"/etc/connectivity.yaml"}
 
-func FindConfig() string {
+func FindConfig() (string, error) {
 	for _, path := range ConfigPaths {
 		if _, err := os.Stat(path); err == nil {
-			return path
+			return path, nil
 		}
 	}
-	log.Fatal("Failed to locate a config file: ./connectivity.yml ~/.connectivity.yml or /etc/connectivity.yml")
-	return "" // log.Fatal makes this unreachable
+	return "", errors.New("Failed to locate a config file: ./connectivity.yml ~/.connectivity.yml or /etc/connectivity.yml")
 }
 
 func LoadConfig(path string) *Config {

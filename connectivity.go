@@ -17,16 +17,22 @@ func main() {
 
 	if command == "validate-config" {
 		var configPath string
+		var err error
 		if len(os.Args) == 3 {
 			configPath = os.Args[2]
 		} else {
-			configPath = FindConfig()
+			configPath, err = FindConfig()
+			if err != nil {
+				log.Fatal(err)
+			}
 		}
+
 		config := LoadConfig(configPath)
 		destinations := ParseDestinations(config.URLs)
 		ShowDestinations(destinations)
 	} else if command == "check" {
-		config := LoadConfig(FindConfig())
+		configPath, _ := FindConfig()
+		config := LoadConfig(configPath)
 		go StatsdSender(config)
 		urls := GetURLs(config)
 		destinations := ParseDestinations(urls)
@@ -36,13 +42,15 @@ func main() {
 			os.Exit(1)
 		}
 	} else if command == "wait" || command == "waitfor" {
-		config := LoadConfig(FindConfig())
+		configPath, _ := FindConfig()
+		config := LoadConfig(configPath)
 		go StatsdSender(config)
 		urls := GetURLs(config)
 		destinations := ParseDestinations(urls)
 		WaitForConnectivity(destinations)
 	} else if command == "monitor" {
-		config := LoadConfig(FindConfig())
+		configPath, _ := FindConfig()
+		config := LoadConfig(configPath)
 		go StatsdSender(config)
 		urls := GetURLs(config)
 		destinations := ParseDestinations(urls)
@@ -63,10 +71,11 @@ func main() {
 
 func GetURLs(config *Config) []Url {
 	if len(os.Args) > 2 {
-		urls := []Url{}
-		urlStrings := os.Args[1:len(os.Args)]
-		for idx, url := range urlStrings {
-			urls = append(urls, Url{
+		// Ignore URLs in the config file and use the ones from the CLI instead
+		config.URLs = []Url{}
+
+		for idx, url := range os.Args[1:len(os.Args)] {
+			config.URLs = append(config.URLs, Url{
 				Label: strconv.Itoa(idx),
 				Url:   url})
 		}
