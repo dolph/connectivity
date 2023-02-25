@@ -64,15 +64,15 @@ func LoadConfig(path string) *Config {
 	}
 
 	// Apply some default values
-	// if cfg.StatsdHost == "" {
-	// 	cfg.StatsdHost = "127.0.0.1"
-	// }
-	// if cfg.StatsdPort == 0 {
-	// 	cfg.StatsdPort = 8125
-	// }
-	// if cfg.StatsdProtocol == "" {
-	// 	cfg.StatsdProtocol = "udp"
-	// }
+	if cfg.StatsdHost == "" {
+		cfg.StatsdHost = "127.0.0.1"
+	}
+	if cfg.StatsdPort == 0 {
+		cfg.StatsdPort = 8125
+	}
+	if cfg.StatsdProtocol == "" {
+		cfg.StatsdProtocol = "udp"
+	}
 
 	return &cfg
 }
