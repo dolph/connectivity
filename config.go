@@ -34,7 +34,8 @@ func FindConfig() string {
 			return path
 		}
 	}
-	return ""
+	log.Fatal("Failed to locate a config file: ./connectivity.yml ~/.connectivity.yml or /etc/connectivity.yml")
+	return "" // log.Fatal makes this unreachable
 }
 
 func LoadConfig(path string) *Config {
