@@ -75,13 +75,13 @@ func (dest *Destination) Timer(metric string, took time.Duration) {
 func NewDestination(dest Url) (*Destination, error) {
 	url, err := url.Parse(dest.Url)
 	if err != nil {
-		return nil, errors.New(fmt.Sprintf("[%s] Failed to parse URL: %s", dest.Label, err))
+		return nil, errors.New(fmt.Sprintf("%s Failed to parse URL: %s", dest, err))
 	}
 
 	// Determine host
 	host := url.Hostname()
 	if host == "" {
-		return nil, errors.New(fmt.Sprintf("[%s] Failed to parse a host in URL: %s", dest.Label, err))
+		return nil, errors.New(fmt.Sprintf("%s Failed to parse a host in URL: %s", dest, err))
 	}
 
 	// Determine scheme
@@ -104,7 +104,7 @@ func NewDestination(dest Url) (*Destination, error) {
 			} else if scheme == "icmp" {
 				portNumber = -1
 			} else {
-				return nil, errors.New(fmt.Sprintf("[%s] Unsupported scheme (try specifying tcp:// or udp:// and an explicit port, or icmp:// for ping-only): %s", dest.Label, err))
+				return nil, errors.New(fmt.Sprintf("%s Unsupported scheme (try specifying tcp:// or udp:// and an explicit port, or icmp:// for ping-only): %s", dest, err))
 			}
 		}
 	}
@@ -172,7 +172,7 @@ func (dest *Destination) Check() bool {
 }
 
 func (dest *Destination) Monitor() {
-	log.Printf("Monitoring connectivity to %v", dest)
+	log.Printf("%v Monitoring connectivity to %v", dest, dest.UrlString())
 
 	confidence := 1
 
@@ -198,14 +198,14 @@ func (dest *Destination) Monitor() {
 }
 
 func (dest *Destination) WaitFor() {
-	log.Printf("%s Waiting for connectivity to %v", GetLocalIPs(), dest)
+	log.Printf("%s%s Waiting for connectivity to %v", GetLocalIPs(), dest, dest.UrlString())
 
 	for {
 		dest.Increment("connectivity.check", []string{})
 		reachable := dest.Check()
 
 		if reachable {
-			log.Printf("%s Validated %v", GetLocalIPs(), dest)
+			log.Printf("%s%s Validated", GetLocalIPs(), dest)
 			return
 		} else {
 			dest.Increment("connectivity.check.error", []string{})
