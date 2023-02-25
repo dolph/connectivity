@@ -8,7 +8,7 @@ import (
 
 // Try to open a connection to the destination, and then immediately disconnect
 // if succcessful. This ensures we have a network path to the destination, and
-// can be used to ensure that individual records in a DNS response are available.
+// validates each individual record in the DNS response.
 func Dial(dest *Destination, ip net.IP) bool {
 	metricTags := []string{fmt.Sprintf("dest_ip:%s", ip.String())}
 	hostPort := fmt.Sprintf("%s:%d", ip.String(), dest.Port)
