@@ -67,13 +67,23 @@ func main() {
 		PrintVersion()
 	} else if command == "help" {
 		if len(os.Args) == 3 {
-			PrintCommandUsage(os.Args[2])
+			// connectivity help <subcommand>
+			if PrintCommandUsage(os.Args[2]) {
+				// Command usage for this argument was found
+				os.Exit(0)
+			} else {
+				// Invalid subcommand
+				os.Exit(2)
+			}
 		} else {
+			// connectivity help
 			PrintUsage()
 		}
 	} else {
 		PrintUsage()
-		os.Exit(1)
+
+		// Invalid subcommand
+		os.Exit(2)
 	}
 }
 

@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"os"
 )
 
 var GitTag string
@@ -42,7 +41,8 @@ func PrintUsage() {
 	fmt.Println("")
 	fmt.Println("Use \"connectivity help <command>\" for more information about that command.")
 }
-func PrintCommandUsage(command string) {
+
+func PrintCommandUsage(command string) bool {
 	if command == "check" {
 		fmt.Println("Validate specified connectivity once and exit.")
 		fmt.Println("")
@@ -83,6 +83,7 @@ func PrintCommandUsage(command string) {
 		fmt.Println("- /etc/connectivity.yml")
 	} else {
 		PrintUsage()
-		os.Exit(1)
+		return false
 	}
+	return true
 }
