@@ -44,7 +44,7 @@ func main() {
 		go StatsdSender(config)
 		urls := GetURLs(config)
 		destinations := ParseDestinations(urls)
-		if CheckForConnectivityOnce(destinations) {
+		if CheckLoop(destinations) {
 			os.Exit(0)
 		} else {
 			os.Exit(1)
@@ -55,14 +55,14 @@ func main() {
 		go StatsdSender(config)
 		urls := GetURLs(config)
 		destinations := ParseDestinations(urls)
-		WaitForConnectivity(destinations)
+		WaitLoop(destinations)
 	} else if command == "monitor" {
 		configPath, _ := FindConfig()
 		config := LoadConfig(configPath)
 		go StatsdSender(config)
 		urls := GetURLs(config)
 		destinations := ParseDestinations(urls)
-		MonitorConnectivityForever(destinations)
+		MonitorLoop(destinations)
 	} else if command == "version" {
 		PrintVersion()
 	} else if command == "help" {
@@ -133,7 +133,7 @@ func ShowDestinations(destinations []*Destination) {
 	}
 }
 
-func CheckForConnectivityOnce(destinations []*Destination) bool {
+func CheckLoop(destinations []*Destination) bool {
 	// Assume all destinations are reachable until proven otherwise
 	reachable := true
 
@@ -149,7 +149,7 @@ func CheckForConnectivityOnce(destinations []*Destination) bool {
 	return reachable
 }
 
-func WaitForConnectivity(destinations []*Destination) {
+func WaitLoop(destinations []*Destination) {
 	var wg sync.WaitGroup
 	for _, dest := range destinations {
 		wg.Add(1)
@@ -162,7 +162,7 @@ func WaitForConnectivity(destinations []*Destination) {
 	wg.Wait()
 }
 
-func MonitorConnectivityForever(destinations []*Destination) {
+func MonitorLoop(destinations []*Destination) {
 	for _, dest := range destinations {
 		go dest.Monitor()
 	}
