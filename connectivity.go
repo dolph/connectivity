@@ -124,42 +124,19 @@ func ShowDestinations(destinations []*Destination) {
 }
 
 func CheckForConnectivityOnce(destinations []*Destination) bool {
-	chanOwner := func(dest *Destination) <-chan bool {
-		ch := make(chan bool)
-		go func(dest *Destination) {
-			defer close(ch)
-			reachable := dest.Check()
-			if reachable {
-				log.Printf("%v%v Validated", GetLocalIPs(), dest)
-			}
-			ch <- reachable
-		}(dest)
-		return ch
-	}
+	// Assume all destinations are reachable until proven otherwise
+	reachable := true
 
-	consumer := func(ch <-chan bool) bool {
-		return <-ch
-	}
-
-	// Call all channel owners
-	checks := []<-chan bool{}
+	// Check destinations sequentially, which is slow, but fixes issue #2
 	for _, dest := range destinations {
-		checks = append(checks, chanOwner(dest))
-	}
-
-	// Collect results from consumers
-	results := []bool{}
-	for _, check := range checks {
-		results = append(results, consumer(check))
-	}
-
-	for _, result := range results {
-		if !result {
-			return false
+		if dest.Check() {
+			log.Printf("%v%v Validated", GetLocalIPs(), dest)
+		} else {
+			reachable = false
 		}
 	}
 
-	return true
+	return reachable
 }
 
 func WaitForConnectivity(destinations []*Destination) {
