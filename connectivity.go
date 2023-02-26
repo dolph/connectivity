@@ -7,6 +7,14 @@ import (
 	"sync"
 )
 
+/*
+
+This module is responsible for parsing CLI arguments and return codes. It
+handles the top-level subcommands and main loops for each (check, wait, and
+monitor). All goroutines are managed here.
+
+*/
+
 func main() {
 	if len(os.Args) == 1 {
 		PrintUsage()

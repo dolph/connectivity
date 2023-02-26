@@ -11,6 +11,14 @@ import (
 	"time"
 )
 
+/*
+
+This module handles all the business logic of validating destinations by
+orchestrating all the various connectivity verification steps that a given
+destination might support.
+
+*/
+
 type Destination struct {
 	Label       string
 	URL         string
