@@ -97,6 +97,9 @@ func NewDestination(u Url) (*Destination, error) {
 
 	// Determine port number
 	port := url.Port()
+	if port != "" && scheme == "icmp" {
+		return nil, errors.New(fmt.Sprintf("%s: ICMP cannot be used with a port number: %v", u, u.Url))
+	}
 	var portNumber int
 	if port != "" {
 		portNumber, err = strconv.Atoi(url.Port())
