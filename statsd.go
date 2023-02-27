@@ -30,6 +30,15 @@ func formatTags(tags []string) string {
 	return strings.Join(tags[:], ",")
 }
 
+func EscapeTag(s string) string {
+	// Replace all special characters used in the statsd wire protocol
+	s = strings.Replace(s, ":", "-", -1)
+	s = strings.Replace(s, "|", "-", -1)
+	s = strings.Replace(s, ",", "-", -1)
+	s = strings.Replace(s, "@", "-", -1)
+	return s
+}
+
 func StatsdSender(config *Config) {
 	for s := range queue {
 		statsdHostPort := fmt.Sprintf("%s:%d", config.StatsdHost, config.StatsdPort)

@@ -67,9 +67,9 @@ func (dest *Destination) UrlString() string {
 
 func (dest *Destination) tags() []string {
 	return []string{
-		fmt.Sprintf("dest_label:%s", dest.Label),
-		fmt.Sprintf("dest_scheme:%s", dest.Scheme),
-		fmt.Sprintf("dest_host:%s", dest.Host),
+		fmt.Sprintf("dest_label:%s", EscapeTag(dest.Label)),
+		fmt.Sprintf("dest_scheme:%s", EscapeTag(dest.Scheme)),
+		fmt.Sprintf("dest_host:%s", EscapeTag(dest.Host)),
 		fmt.Sprintf("dest_port:%d", dest.Port),
 	}
 }
