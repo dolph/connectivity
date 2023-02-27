@@ -3,7 +3,6 @@ package main
 import (
 	"errors"
 	"fmt"
-	"log"
 	"net"
 	"net/url"
 	"strconv"
@@ -33,7 +32,11 @@ type Destination struct {
 }
 
 func (dest Destination) String() string {
-	return fmt.Sprintf(" %s:", dest.Label)
+	if dest.Label != "" {
+		return fmt.Sprintf("%s:", dest.Label)
+	} else {
+		return fmt.Sprintf("%s:", dest.UrlString())
+	}
 }
 
 func (dest *Destination) UrlString() string {
@@ -149,7 +152,7 @@ func (dest *Destination) Check() bool {
 
 	dnsResults, err := Lookup(dest)
 	if err != nil {
-		log.Printf("%v%v Failed to resolve host: %v", GetLocalIPs(), dest, err)
+		LogDestinationError(dest, "Failed to resolve host", err)
 		reachable = false
 	}
 
@@ -160,7 +163,7 @@ func (dest *Destination) Check() bool {
 				// Check destination IP for routability
 				route, err := GetRoute(ip)
 				if err != nil {
-					log.Printf("%v%v Failed to route to %s: %v", GetLocalIPs(), dest, ip.String(), err)
+					LogDestinationError(dest, fmt.Sprintf("Failed to route to %s", ip.String()), err)
 					return false
 				}
 
@@ -183,8 +186,6 @@ func (dest *Destination) Check() bool {
 }
 
 func (dest *Destination) Monitor() {
-	log.Printf("%v%v Monitoring connectivity to %v", GetLocalIPs(), dest, dest.UrlString())
-
 	confidence := 1
 
 	for {
@@ -209,14 +210,12 @@ func (dest *Destination) Monitor() {
 }
 
 func (dest *Destination) WaitFor() {
-	log.Printf("%s%s Waiting for connectivity to %v", GetLocalIPs(), dest, dest.UrlString())
-
 	for {
 		dest.Increment("connectivity.check", []string{})
 		reachable := dest.Check()
 
 		if reachable {
-			log.Printf("%s%s Validated", GetLocalIPs(), dest)
+			LogDestination(dest, "Validated")
 			return
 		} else {
 			dest.Increment("connectivity.check.error", []string{})

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"log"
 	"net/http"
 )
 
@@ -9,7 +8,7 @@ import (
 func HTTPS(dest *Destination) bool {
 	_, err := http.Get(dest.URL)
 	if err != nil {
-		log.Printf("%s%s Failed HTTP GET: %v", GetLocalIPs(), dest, err)
+		LogDestinationError(dest, "Failed HTTP GET", err)
 		return false
 	}
 	return true

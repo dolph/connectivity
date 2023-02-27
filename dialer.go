@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"net"
 )
 
@@ -18,7 +17,7 @@ func Dial(route *Route, dest *Destination, ip net.IP) bool {
 	conn, err := net.Dial(dest.Protocol, hostPort)
 	if err != nil {
 		dest.Increment("connectivity.dial.error", metricTags)
-		log.Printf("%s%s Failed to %v", route, dest, err)
+		LogRouteDestinationError(route, dest, "Failed", err)
 		return false
 	}
 	defer conn.Close()

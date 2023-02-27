@@ -3,7 +3,6 @@ package main
 import (
 	"log"
 	"os"
-	"strconv"
 	"sync"
 )
 
@@ -44,6 +43,8 @@ func main() {
 		go StatsdSender(config)
 		urls := GetURLs(config)
 		destinations := ParseDestinations(urls)
+		log.Print("Checking all connectivity...")
+		ShowDestinations(destinations)
 		if CheckLoop(destinations) {
 			os.Exit(0)
 		} else {
@@ -55,6 +56,8 @@ func main() {
 		go StatsdSender(config)
 		urls := GetURLs(config)
 		destinations := ParseDestinations(urls)
+		ShowDestinations(destinations)
+		log.Print("Waiting until all connectivity is validated...")
 		WaitLoop(destinations)
 	} else if command == "monitor" {
 		configPath, _ := FindConfig()
@@ -62,6 +65,8 @@ func main() {
 		go StatsdSender(config)
 		urls := GetURLs(config)
 		destinations := ParseDestinations(urls)
+		ShowDestinations(destinations)
+		log.Print("Monitoring connectivity...")
 		MonitorLoop(destinations)
 	} else if command == "version" {
 		PrintVersion()
@@ -92,10 +97,8 @@ func GetURLs(config *Config) []Url {
 		// Ignore URLs in the config file and use the ones from the CLI instead
 		config.URLs = []Url{}
 
-		for idx, url := range os.Args[1:len(os.Args)] {
-			config.URLs = append(config.URLs, Url{
-				Label: strconv.Itoa(idx),
-				Url:   url})
+		for _, url := range os.Args[1:len(os.Args)] {
+			config.URLs = append(config.URLs, Url{Url: url})
 		}
 	}
 	return config.URLs
@@ -128,8 +131,8 @@ func ShowDestinations(destinations []*Destination) {
 		os.Exit(1)
 	}
 	log.Print("Parsed the following destinations:")
-	for idx, dest := range destinations {
-		log.Printf("%d %s %s\n", idx+1, dest, dest.UrlString())
+	for _, dest := range destinations {
+		LogDestination(dest, dest.UrlString())
 	}
 }
 
@@ -140,7 +143,7 @@ func CheckLoop(destinations []*Destination) bool {
 	// Check destinations sequentially, which is slow, but fixes issue #2
 	for _, dest := range destinations {
 		if dest.Check() {
-			log.Printf("%v%v Validated", GetLocalIPs(), dest)
+			LogDestination(dest, "Validated")
 		} else {
 			reachable = false
 		}
