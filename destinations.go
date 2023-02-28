@@ -71,6 +71,7 @@ func (dest *Destination) tags() []string {
 		fmt.Sprintf("dest_scheme:%s", EscapeTag(dest.Scheme)),
 		fmt.Sprintf("dest_host:%s", EscapeTag(dest.Host)),
 		fmt.Sprintf("dest_port:%d", dest.Port),
+		fmt.Sprintf("dest_protocol:%s", EscapeTag(dest.Protocol)),
 	}
 }
 
@@ -79,8 +80,9 @@ func (dest *Destination) Increment(metric string, tags []string) {
 	Increment(metric, tags)
 }
 
-func (dest *Destination) Timer(metric string, took time.Duration) {
-	Timer(metric, took, dest.tags())
+func (dest *Destination) Timer(metric string, took time.Duration, tags []string) {
+	tags = append(tags, dest.tags()...)
+	Timer(metric, took, tags)
 }
 
 func NewDestination(u Url) (*Destination, error) {
@@ -147,6 +149,8 @@ func NewDestination(u Url) (*Destination, error) {
 }
 
 func (dest *Destination) Check() bool {
+	dest.Increment("connectivity.check", []string{})
+
 	// Assume the destination is reachable until proven otherwise
 	reachable := true
 
@@ -182,6 +186,12 @@ func (dest *Destination) Check() bool {
 		}
 	}
 
+	if reachable {
+		dest.Increment("connectivity.check.success", []string{})
+	} else {
+		dest.Increment("connectivity.check.error", []string{})
+	}
+
 	return reachable
 }
 
@@ -189,7 +199,6 @@ func (dest *Destination) Monitor() {
 	confidence := 1
 
 	for {
-		dest.Increment("connectivity.check", []string{})
 		reachable := dest.Check()
 
 		if reachable {
@@ -198,7 +207,6 @@ func (dest *Destination) Monitor() {
 				confidence = 10
 			}
 		} else {
-			dest.Increment("connectivity.check.error", []string{})
 			confidence -= 1
 			if confidence < 1 {
 				confidence = 1
@@ -211,14 +219,11 @@ func (dest *Destination) Monitor() {
 
 func (dest *Destination) WaitFor() {
 	for {
-		dest.Increment("connectivity.check", []string{})
 		reachable := dest.Check()
 
 		if reachable {
 			LogDestination(dest, "Validated")
 			return
-		} else {
-			dest.Increment("connectivity.check.error", []string{})
 		}
 
 		time.Sleep(15 * time.Second)

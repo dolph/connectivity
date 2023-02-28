@@ -21,5 +21,6 @@ func Dial(route *Route, dest *Destination, ip net.IP) bool {
 		return false
 	}
 	defer conn.Close()
+	dest.Increment("connectivity.dial.success", metricTags)
 	return true
 }

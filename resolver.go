@@ -11,12 +11,14 @@ func Lookup(dest *Destination) ([]net.IP, error) {
 	t1 := time.Now()
 	results, err := net.LookupIP(dest.Host)
 	t2 := time.Now()
-	dest.Timer("connectivity.lookup", t2.Sub(t1))
+	dest.Timer("connectivity.lookup", t2.Sub(t1), []string{})
 
 	if err != nil {
 		dest.Increment("connectivity.lookup.error", []string{})
 		return nil, err
 	}
+
+	dest.Increment("connectivity.lookup.success", []string{})
 
 	var ips []net.IP
 	for _, ip := range results {
