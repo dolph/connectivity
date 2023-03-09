@@ -19,9 +19,9 @@ type Route struct {
 
 func (r *Route) String() string {
 	if r.SourceIP == nil && r.GatewayIP == nil {
-		// If we failed to route through a gateway, log without source IP or outgoing iface.
-		// (Assume IPv4!)
-		return fmt.Sprintf("[%s][127.0.0.1 › %s]", r.SourceHostname, r.DestinationIP)
+		// If we failed to route through a gateway, log without a determined
+		// source IP or outgoing iface. (Assume IPv4!)
+		return fmt.Sprintf("[%s][%s › %s]", r.SourceHostname, GetLocalIPs(), r.DestinationIP)
 	} else if r.SourceIP.String() == r.DestinationIP.String() || r.SourceIP.IsLoopback() {
 		// If the source and destination are the same, the route is trivial.
 		return fmt.Sprintf("[%s][%s][%s]", r.SourceHostname, r.SourceInterfaceName, r.DestinationIP)
