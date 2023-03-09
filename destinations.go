@@ -221,7 +221,7 @@ func (dest *Destination) WaitFor() {
 		reachable := dest.Check()
 
 		if reachable {
-			LogDestination(dest, "Validated")
+			LogDestination(dest, "Connected")
 			return
 		}
 

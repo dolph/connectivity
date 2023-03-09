@@ -143,7 +143,7 @@ func CheckLoop(destinations []*Destination) bool {
 	// Check destinations sequentially, which is slow, but fixes issue #2
 	for _, dest := range destinations {
 		if dest.Check() {
-			LogDestination(dest, "Validated")
+			LogDestination(dest, "Connected")
 		} else {
 			reachable = false
 		}
