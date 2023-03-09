@@ -168,7 +168,6 @@ func (dest *Destination) Check() bool {
 				route, err := GetRoute(ip)
 				if err != nil {
 					LogDestinationError(dest, fmt.Sprintf("Failed to route to %s", ip.String()), err)
-					return false
 				}
 
 				if dest.Protocol == "icmp" {

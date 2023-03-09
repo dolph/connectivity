@@ -18,7 +18,11 @@ type Route struct {
 }
 
 func (r *Route) String() string {
-	if r.SourceIP.String() == r.DestinationIP.String() || r.SourceIP.IsLoopback() {
+	if r.SourceIP == nil && r.GatewayIP == nil {
+		// If we failed to route through a gateway, log without source IP or outgoing iface.
+		// (Assume IPv4!)
+		return fmt.Sprintf("[%s][127.0.0.1 › %s]", r.SourceHostname, r.DestinationIP)
+	} else if r.SourceIP.String() == r.DestinationIP.String() || r.SourceIP.IsLoopback() {
 		// If the source and destination are the same, the route is trivial.
 		return fmt.Sprintf("[%s][%s][%s]", r.SourceHostname, r.SourceInterfaceName, r.DestinationIP)
 	} else {
@@ -32,22 +36,31 @@ func GetRoute(ip net.IP) (*Route, error) {
 		return nil, err
 	}
 
-	iface, gateway, source, err := r.Route(ip)
-	if err != nil {
-		return nil, err
-	}
-
 	hostname, err := os.Hostname()
 	if err != nil {
 		hostname = ""
 	}
 
-	return &Route{
-			SourceHostname:        hostname,
-			SourceInterfaceName:   iface.Name,
-			SourceHardwareAddress: iface.HardwareAddr,
-			SourceIP:              source,
-			GatewayIP:             gateway,
-			DestinationIP:         ip},
-		nil
+	iface, gateway, source, err := r.Route(ip)
+	if err != nil {
+		// This is possibly a workaround until something like https://github.com/google/gopacket/pull/697 is released
+		return &Route{
+				SourceHostname:        hostname,
+				SourceInterfaceName:   "",
+				SourceHardwareAddress: nil,
+				SourceIP:              nil,
+				GatewayIP:             nil,
+				DestinationIP:         ip},
+			err
+	} else {
+		return &Route{
+				SourceHostname:        hostname,
+				SourceInterfaceName:   iface.Name,
+				SourceHardwareAddress: iface.HardwareAddr,
+				SourceIP:              source,
+				GatewayIP:             gateway,
+				DestinationIP:         ip},
+			nil
+	}
+
 }
