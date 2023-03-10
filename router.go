@@ -31,14 +31,21 @@ func (r *Route) String() string {
 }
 
 func GetRoute(ip net.IP) (*Route, error) {
-	r, err := routing.New()
-	if err != nil {
-		return nil, err
-	}
-
 	hostname, err := os.Hostname()
 	if err != nil {
-		hostname = ""
+		hostname = "localhost"
+	}
+
+	r, err := routing.New()
+	if err != nil {
+		return &Route{
+				SourceHostname:        hostname,
+				SourceInterfaceName:   "",
+				SourceHardwareAddress: nil,
+				SourceIP:              nil,
+				GatewayIP:             nil,
+				DestinationIP:         ip},
+			err
 	}
 
 	iface, gateway, source, err := r.Route(ip)
