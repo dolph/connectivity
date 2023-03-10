@@ -36,38 +36,29 @@ func GetRoute(ip net.IP) (*Route, error) {
 		hostname = "localhost"
 	}
 
+	route := &Route{
+		SourceHostname:        hostname,
+		SourceInterfaceName:   "",
+		SourceHardwareAddress: nil,
+		SourceIP:              nil,
+		GatewayIP:             nil,
+		DestinationIP:         ip}
+
 	r, err := routing.New()
 	if err != nil {
-		return &Route{
-				SourceHostname:        hostname,
-				SourceInterfaceName:   "",
-				SourceHardwareAddress: nil,
-				SourceIP:              nil,
-				GatewayIP:             nil,
-				DestinationIP:         ip},
-			err
+		return route, err
 	}
 
 	iface, gateway, source, err := r.Route(ip)
 	if err != nil {
 		// This is possibly a workaround until something like https://github.com/google/gopacket/pull/697 is released
-		return &Route{
-				SourceHostname:        hostname,
-				SourceInterfaceName:   "",
-				SourceHardwareAddress: nil,
-				SourceIP:              nil,
-				GatewayIP:             nil,
-				DestinationIP:         ip},
-			err
+		return route, err
 	} else {
-		return &Route{
-				SourceHostname:        hostname,
-				SourceInterfaceName:   iface.Name,
-				SourceHardwareAddress: iface.HardwareAddr,
-				SourceIP:              source,
-				GatewayIP:             gateway,
-				DestinationIP:         ip},
-			nil
+		route.SourceInterfaceName = iface.Name
+		route.SourceHardwareAddress = iface.HardwareAddr
+		route.SourceIP = source
+		route.GatewayIP = gateway
+		return route, nil
 	}
 
 }
