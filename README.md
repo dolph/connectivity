@@ -8,7 +8,7 @@ Given a set of URLs, connectivity attempts to validate each one as thoroughly as
 
 2. If a URL contains a hostname, it is resolved.
 
-3. Each address returned by DNS is validated for routability.
+3. The routability of each address is evaluated. Failures in routability are non-fatal; that is, the attempt to determine a viable route is only useful for producing robust logging upon failure, but does not indicate a failure in the actual routability from the host.
 
 4. Each address returned by DNS is dialed to validate the network path (or pinged, in the case of URLs like `icmp://<host>`.
 
