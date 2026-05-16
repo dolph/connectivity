@@ -19,6 +19,27 @@ A handful of tests in `resolver_test.go` and `router_test.go` reach the real net
 
 `./build.sh` runs vet, build with version-injected ldflags, and tests. It's primarily for release builds; daily development is fine with the plain `go` commands above.
 
+## Test-driven development
+
+Default to writing the test first.
+
+1. Write a failing test that captures the bug or the new behavior.
+2. Run `go test -run TestName` and confirm it fails *for the reason you expect* — not a compile error, not a typo.
+3. Make the smallest change that turns it green.
+4. Refactor while green; rerun the test after each step.
+
+This catches a class of mistakes that retroactive tests miss: tests that happen to pass against the broken code (because they don't actually exercise the failure mode), and tests that pass trivially (because they don't assert what they claim to).
+
+For Go specifically:
+
+- Prefer table-driven tests. Each case is one row in a slice of structs; loop with `t.Run(tc.name, ...)` so failures point at the row that failed.
+- Tests must be hermetic by default — no real network, no filesystem outside `t.TempDir()`, no routing-table reads. Several existing tests violate this (#24); don't follow that pattern in new code.
+- When a fix has no unit-testable seam (the function couples directly to `net.Dial`, the kernel routing table, etc.), it's acceptable to ship the fix without a new test — but say so explicitly in the PR's Test Plan and file a follow-up to add the seam.
+- Use descriptive test names: `TestParseDestinations_DropsFirstURLFromConfig` beats `TestParseDestinations_Bug5`.
+- Use `t.Cleanup` and `t.TempDir` to manage fixtures; don't leave state behind between cases.
+
+Don't go through the motions. A test that calls the function and `t.Fatal`s on a returned error without asserting on outputs is checklist theater — and worse, it gives false confidence that the behavior is covered.
+
 ## Code style
 
 - Idiomatic Go. Prefer the standard library; new third-party deps need justification.
