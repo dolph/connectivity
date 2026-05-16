@@ -5,7 +5,7 @@ set -e
 go vet
 
 # Build
-GIT_COMMIT="$(git rev-parse --short $(git rev-list -1 HEAD))"
+GIT_COMMIT="$(git rev-parse --short HEAD)"
 GIT_TAG="$(git tag --points-at HEAD)"
 GO_VERSION="$(go version | cut -d' ' -f3)"
 BUILD_DATE="$(date --utc)"
