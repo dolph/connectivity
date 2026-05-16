@@ -4,6 +4,7 @@ import (
 	"log"
 	"os"
 	"sync"
+	"time"
 )
 
 /*
@@ -153,13 +154,28 @@ func CheckLoop(destinations []*Destination) bool {
 }
 
 func WaitLoop(destinations []*Destination) {
+	checks := make([]func() bool, len(destinations))
+	for i, dest := range destinations {
+		checks[i] = dest.Check
+	}
+	waitLoop(destinations, checks, 15*time.Second)
+}
+
+// waitLoop is the testable form of WaitLoop: each destination is polled by
+// the corresponding entry in checks, sleeping `sleep` between attempts.
+// Tests pass deterministic stub checks and a zero sleep so the goroutine
+// fan-out can be exercised hermetically. The two slices must be the same
+// length; in production they're built from the destinations themselves.
+//
+// see #17 -- still no context.Context for cancellation.
+func waitLoop(destinations []*Destination, checks []func() bool, sleep time.Duration) {
 	var wg sync.WaitGroup
-	for _, dest := range destinations {
+	for i, dest := range destinations {
 		wg.Add(1)
-		go func(dest *Destination) {
+		go func(dest *Destination, check func() bool) {
 			defer wg.Done()
-			dest.WaitFor()
-		}(dest)
+			dest.waitForWithCheck(check, sleep)
+		}(dest, checks[i])
 	}
 
 	wg.Wait()

@@ -198,30 +198,51 @@ func (dest *Destination) Monitor() {
 	confidence := 1
 
 	for {
-		reachable := dest.Check()
-
-		if reachable {
-			confidence += 1
-			if confidence > 10 {
-				confidence = 10
-			}
-		} else {
-			confidence = 1
-		}
-
-		time.Sleep(time.Duration(confidence) * time.Minute)
+		confidence = dest.monitorWithCheck(confidence, dest.Check, time.Sleep)
 	}
 }
 
-func (dest *Destination) WaitFor() {
-	for {
-		reachable := dest.Check()
+// monitorWithCheck runs one iteration of the Monitor loop: invoke check,
+// adjust confidence per the #16 reset-on-failure rule, then sleep. The
+// confidence value is threaded through the caller (rather than held in a
+// closure) so a test can drive a deterministic sequence of iterations
+// without spawning a goroutine. The injected sleep lets the test observe
+// the chosen sleep duration without waiting on a real clock.
+//
+// see #17 -- Monitor itself still has no termination condition, no panic
+// recovery, and no context.Context; those land with the lifecycle work.
+func (dest *Destination) monitorWithCheck(confidence int, check func() bool, sleep func(time.Duration)) int {
+	if check() {
+		confidence += 1
+		if confidence > 10 {
+			confidence = 10
+		}
+	} else {
+		confidence = 1
+	}
 
-		if reachable {
+	sleep(time.Duration(confidence) * time.Minute)
+	return confidence
+}
+
+func (dest *Destination) WaitFor() {
+	// see #18 -- the 15s flat poll has no overall deadline and no
+	// exponential backoff; that lands with the wait-timeout flag.
+	dest.waitForWithCheck(dest.Check, 15*time.Second)
+}
+
+// waitForWithCheck polls check until it returns true, sleeping `sleep`
+// between attempts. The seam keeps WaitFor's public signature intact while
+// giving tests a way to substitute a deterministic check and a zero sleep.
+//
+// see #17 -- there is still no context.Context for cancellation; the loop
+// runs forever on a permanently-broken destination.
+func (dest *Destination) waitForWithCheck(check func() bool, sleep time.Duration) {
+	for {
+		if check() {
 			LogDestination(dest, "Connected")
 			return
 		}
-
-		time.Sleep(15 * time.Second)
+		time.Sleep(sleep)
 	}
 }
