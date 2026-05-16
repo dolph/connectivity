@@ -206,10 +206,7 @@ func (dest *Destination) Monitor() {
 				confidence = 10
 			}
 		} else {
-			confidence -= 1
-			if confidence < 1 {
-				confidence = 1
-			}
+			confidence = 1
 		}
 
 		time.Sleep(time.Duration(confidence) * time.Minute)
