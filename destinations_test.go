@@ -262,3 +262,145 @@ func TestUdpUrlWithPort(t *testing.T) {
 	assertHostEquals(t, got.Host, "host")
 	assertPortEquals(t, got.Port, 123)
 }
+
+// TestUrlString table-tests Destination.UrlString. The key invariant is that
+// when a password is set on the URL, it is redacted as `[...]` in the
+// formatted string (refs #12). A regression here would leak credentials into
+// logs at INFO level — every Check call passes the destination through
+// LogDestination, which formats with %s and thus calls String() ->
+// UrlString().
+//
+// Cases exercise the cross-product of {no userinfo, username only, username
+// +password} × {no port, with port} × {default vs custom path} × {scheme ==
+// protocol vs scheme != protocol}.
+func TestUrlString(t *testing.T) {
+	cases := []struct {
+		name string
+		dest Destination
+		want string
+	}{
+		{
+			name: "tcp_scheme_equals_protocol_no_parens",
+			dest: Destination{Scheme: "tcp", Protocol: "tcp", Host: "example.com", Port: 1234, Path: ""},
+			want: "tcp://example.com:1234",
+		},
+		{
+			name: "http_appends_tcp_in_parens_because_scheme_differs_from_protocol",
+			dest: Destination{Scheme: "http", Protocol: "tcp", Host: "example.com", Port: 80, Path: ""},
+			want: "http://example.com:80 (tcp)",
+		},
+		{
+			name: "https_with_path_appends_tcp_in_parens",
+			dest: Destination{Scheme: "https", Protocol: "tcp", Host: "example.com", Port: 443, Path: "/health"},
+			want: "https://example.com:443/health (tcp)",
+		},
+		{
+			name: "username_only_no_password_set",
+			dest: Destination{
+				Scheme:      "https",
+				Protocol:    "tcp",
+				Username:    "alice",
+				PasswordSet: false,
+				Host:        "example.com",
+				Port:        443,
+			},
+			want: "https://alice@example.com:443 (tcp)",
+		},
+		{
+			name: "username_with_password_redacts_as_brackets_ellipsis",
+			dest: Destination{
+				Scheme:      "https",
+				Protocol:    "tcp",
+				Username:    "alice",
+				Password:    "hunter2",
+				PasswordSet: true,
+				Host:        "example.com",
+				Port:        443,
+			},
+			want: "https://alice:[...]@example.com:443 (tcp)",
+		},
+		{
+			name: "username_with_empty_password_still_redacts",
+			dest: Destination{
+				Scheme:      "https",
+				Protocol:    "tcp",
+				Username:    "alice",
+				Password:    "",
+				PasswordSet: true,
+				Host:        "example.com",
+				Port:        443,
+			},
+			want: "https://alice:[...]@example.com:443 (tcp)",
+		},
+		{
+			name: "username_with_password_and_custom_path",
+			dest: Destination{
+				Scheme:      "https",
+				Protocol:    "tcp",
+				Username:    "alice",
+				Password:    "hunter2",
+				PasswordSet: true,
+				Host:        "example.com",
+				Port:        8443,
+				Path:        "/api/v1/health",
+			},
+			want: "https://alice:[...]@example.com:8443/api/v1/health (tcp)",
+		},
+		{
+			name: "icmp_omits_port_when_minus_one_and_no_parens_when_scheme_equals_protocol",
+			dest: Destination{Scheme: "icmp", Protocol: "icmp", Host: "example.com", Port: -1, Path: ""},
+			want: "icmp://example.com",
+		},
+		{
+			name: "mysql_appends_tcp_in_parens",
+			dest: Destination{Scheme: "mysql", Protocol: "tcp", Host: "example.com", Port: 3306, Path: ""},
+			want: "mysql://example.com:3306 (tcp)",
+		},
+		{
+			name: "no_userinfo_when_username_empty_even_if_password_set",
+			dest: Destination{
+				Scheme:      "https",
+				Protocol:    "tcp",
+				Username:    "",
+				Password:    "hunter2",
+				PasswordSet: true,
+				Host:        "example.com",
+				Port:        443,
+			},
+			want: "https://example.com:443 (tcp)",
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			got := tc.dest.UrlString()
+			if got != tc.want {
+				t.Errorf("UrlString() = %q; want %q", got, tc.want)
+			}
+		})
+	}
+}
+
+// TestUrlString_RedactedDoesNotContainPassword belt-and-suspenders for #12:
+// no matter the input shape, the formatted string must not contain the raw
+// password value. This catches regressions where a refactor swaps the order
+// of the userinfo branches and accidentally drops the redaction.
+func TestUrlString_RedactedDoesNotContainPassword(t *testing.T) {
+	const secret = "s3cretP@ss"
+	dest := Destination{
+		Scheme:      "https",
+		Protocol:    "tcp",
+		Username:    "alice",
+		Password:    secret,
+		PasswordSet: true,
+		Host:        "example.com",
+		Port:        443,
+		Path:        "/",
+	}
+	got := dest.UrlString()
+	if strings.Contains(got, secret) {
+		t.Errorf("UrlString() = %q; must not contain password %q", got, secret)
+	}
+	if !strings.Contains(got, "[...]") {
+		t.Errorf("UrlString() = %q; want it to contain redaction marker %q", got, "[...]")
+	}
+}
