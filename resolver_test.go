@@ -36,32 +36,32 @@ func assertLenOfResultsInRange(t *testing.T, got []net.IP, wantMin int, wantMax 
 
 func TestLookupLoopbackIp(t *testing.T) {
 	dest, err := NewDestination(Url{Label: "localhost", Url: "http://127.0.0.1"})
-	assertNoError(t, dest, err)
+	assertNoError(t, "NewDestination(http://127.0.0.1)", err)
 	got, err := Lookup(dest)
-	assertNoError(t, dest, err)
+	assertNoError(t, "Lookup(127.0.0.1)", err)
 	assertLookupEquals(t, got, []net.IP{net.ParseIP("127.0.0.1")})
 }
 
 func TestLookupPublicIp(t *testing.T) {
 	dest, err := NewDestination(Url{Label: "google_dns", Url: "http://8.8.8.8"})
-	assertNoError(t, dest, err)
+	assertNoError(t, "NewDestination(http://8.8.8.8)", err)
 	got, err := Lookup(dest)
-	assertNoError(t, dest, err)
+	assertNoError(t, "Lookup(8.8.8.8)", err)
 	assertLookupEquals(t, got, []net.IP{net.ParseIP("8.8.8.8")})
 }
 
 func TestLookupExample(t *testing.T) {
 	dest, err := NewDestination(Url{Label: "example", Url: "https://example.com"})
-	assertNoError(t, dest, err)
+	assertNoError(t, "NewDestination(https://example.com)", err)
 	got, err := Lookup(dest)
-	assertNoError(t, dest, err)
+	assertNoError(t, "Lookup(example.com)", err)
 	assertLenOfResultsInRange(t, got, 1, 10)
 }
 
 func TestLookupInvalidHostname(t *testing.T) {
 	dest, err := NewDestination(Url{Label: "invalid", Url: "https://a.b.c"})
-	assertNoError(t, dest, err)
+	assertNoError(t, "NewDestination(https://a.b.c)", err)
 	got, err := Lookup(dest)
-	assertError(t, dest, err)
+	assertError(t, "Lookup(a.b.c)", err)
 	assertLenOfResultsInRange(t, got, 0, 0)
 }
