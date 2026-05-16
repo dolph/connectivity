@@ -56,7 +56,12 @@ Don't go through the motions. A test that calls the function and `t.Fatal`s on a
 
 - Branches: `claude/<slug>` for AI-generated work (e.g. `claude/fix-issue-13-toolchain`). Reference the issue number when the change closes one.
 - Commits: imperative mood, lowercase first word, no trailing period. Keep the subject under 72 characters.
-- PRs: include a Summary and Test Plan. Use `Fixes #N` / `Refs #N`. The release workflow reads labels (`release:patch` / `release:minor` / `release:major` / `release:skip`) — default is `patch`.
+- PRs: include a Summary and Test Plan. Use `Fixes #N` / `Refs #N`.
+- Every PR must carry exactly one `release:*` label. The release workflow reads it at merge time and defaults to `patch` when unlabeled, which means an unlabeled docs/test/CI PR cuts an empty patch release. Apply the label *before* merge:
+    - `release:skip` — no user-visible behavior change (tests-only, docs-only, CI/tooling, internal refactor)
+    - `release:patch` — bug fix, security patch, or dependency bump with no API / CLI / config-schema change
+    - `release:minor` — additive change: new flag, new subcommand, new optional config key
+    - `release:major` — breaking change to CLI surface, config schema, exit codes, or emitted metric names
 - Don't merge your own PRs. Don't push to `main`. Don't commit generated artifacts (the `connectivity` binary is gitignored).
 
 ## Issue triage
