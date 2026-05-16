@@ -1,0 +1,143 @@
+name: Release
+
+on:
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
+    branches: [main]
+
+permissions:
+  contents: write
+  pull-requests: read
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    if: github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push'
+    runs-on: ubuntu-latest
+    env:
+      HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          fetch-depth: 0
+
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Determine version bump from PR labels
+        id: bump
+        run: |
+          set -euo pipefail
+          labels="$(gh api "repos/${{ github.repository }}/commits/${HEAD_SHA}/pulls" \
+            --jq '[.[].labels[].name] | .[]' 2>/dev/null || true)"
+          echo "Labels found:"
+          printf '%s\n' "${labels}"
+
+          bump=patch
+          if printf '%s\n' "${labels}" | grep -qx 'release:skip'; then
+            bump=skip
+          elif printf '%s\n' "${labels}" | grep -qx 'release:major'; then
+            bump=major
+          elif printf '%s\n' "${labels}" | grep -qx 'release:minor'; then
+            bump=minor
+          elif printf '%s\n' "${labels}" | grep -qx 'release:patch'; then
+            bump=patch
+          fi
+          echo "bump=${bump}"
+          echo "bump=${bump}" >> "${GITHUB_OUTPUT}"
+
+      - name: Compute next semver tag
+        id: ver
+        if: steps.bump.outputs.bump != 'skip'
+        run: |
+          set -euo pipefail
+          prev="$(git tag -l 'v[0-9]*.[0-9]*.[0-9]*' | sort -V | tail -n1)"
+          if [ -z "${prev}" ]; then
+            base="v0.0.0"
+            has_prev=false
+          else
+            base="${prev}"
+            has_prev=true
+          fi
+
+          ver="${base#v}"
+          IFS='.' read -r major minor patch <<< "${ver}"
+
+          case "${{ steps.bump.outputs.bump }}" in
+            major) major=$((major + 1)); minor=0; patch=0 ;;
+            minor) minor=$((minor + 1)); patch=0 ;;
+            patch) patch=$((patch + 1)) ;;
+          esac
+
+          tag="v${major}.${minor}.${patch}"
+          echo "Previous: ${prev:-<none>}"
+          echo "Next:     ${tag}"
+
+          {
+            echo "tag=${tag}"
+            echo "prev=${prev}"
+            echo "has_prev=${has_prev}"
+          } >> "${GITHUB_OUTPUT}"
+
+      - name: Build static linux/amd64 binary
+        if: steps.bump.outputs.bump != 'skip'
+        env:
+          TAG: ${{ steps.ver.outputs.tag }}
+        run: |
+          set -euo pipefail
+          GO_VERSION="$(go version | cut -d' ' -f3)"
+          BUILD_DATE="$(date --utc --iso-8601=seconds)"
+          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
+            -trimpath \
+            -ldflags="-s -w \
+              -X 'main.GitTag=${TAG}' \
+              -X 'main.GitCommit=${HEAD_SHA}' \
+              -X 'main.GoVersion=${GO_VERSION}' \
+              -X 'main.BuildTimestamp=${BUILD_DATE}' \
+              -X 'main.BuildOS=linux' \
+              -X 'main.BuildArch=amd64' \
+              -X 'main.BuildTainted=false'" \
+            -o connectivity \
+            .
+          file connectivity
+          ./connectivity version
+
+      - name: Create and push annotated tag
+        if: steps.bump.outputs.bump != 'skip'
+        env:
+          TAG: ${{ steps.ver.outputs.tag }}
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git tag -a "${TAG}" -m "${TAG}" "${HEAD_SHA}"
+          git push origin "${TAG}"
+
+      - name: Create GitHub release
+        if: steps.bump.outputs.bump != 'skip'
+        env:
+          TAG: ${{ steps.ver.outputs.tag }}
+          PREV: ${{ steps.ver.outputs.prev }}
+          HAS_PREV: ${{ steps.ver.outputs.has_prev }}
+        run: |
+          set -euo pipefail
+          if [ "${HAS_PREV}" = "true" ]; then
+            gh release create "${TAG}" connectivity \
+              --target "${HEAD_SHA}" \
+              --title "${TAG}" \
+              --generate-notes \
+              --notes-start-tag "${PREV}"
+          else
+            gh release create "${TAG}" connectivity \
+              --target "${HEAD_SHA}" \
+              --title "${TAG}" \
+              --generate-notes
+          fi
