@@ -1,6 +1,11 @@
 #!/bin/bash
 set -e
 
+if [ "${1:-}" = "bench" ]; then
+    go test -bench=. -benchmem ./...
+    exit 0
+fi
+
 # Vet
 go vet
 
@@ -8,8 +13,12 @@ go vet
 GIT_COMMIT="$(git rev-parse --short HEAD)"
 GIT_TAG="$(git tag --points-at HEAD)"
 GO_VERSION="$(go version | cut -d' ' -f3)"
-BUILD_DATE="$(date --utc)"
-BUILD_ARCH="$(arch)"
+if date --utc >/dev/null 2>&1; then
+    BUILD_DATE="$(date --utc)"
+else
+    BUILD_DATE="$(date -u)"
+fi
+BUILD_ARCH="$(uname -m)"
 if [ "$(git status -s | wc -l)" -eq "0" ]; then
     BUILD_TAINTED=false
 else
