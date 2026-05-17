@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"time"
 	"os"
 	"sync"
 )
@@ -57,8 +58,18 @@ func main() {
 		urls := GetURLs(config)
 		destinations := ParseDestinations(urls)
 		ShowDestinations(destinations)
-		log.Print("Waiting until all connectivity is validated...")
-		WaitLoop(destinations)
+		timeout, err := parseWaitTimeout(os.Args[2:])
+		if err != nil {
+			log.Fatal(err)
+		}
+		if timeout > 0 {
+			log.Printf("Waiting until all connectivity is validated (timeout %v)...", timeout)
+		} else {
+			log.Print("Waiting until all connectivity is validated...")
+		}
+		if !WaitLoop(destinations, timeout) {
+			os.Exit(2)
+		}
 	} else if command == "monitor" {
 		configPath, _ := FindConfig()
 		config := LoadConfig(configPath)
@@ -152,17 +163,30 @@ func CheckLoop(destinations []*Destination) bool {
 	return reachable
 }
 
-func WaitLoop(destinations []*Destination) {
-	var wg sync.WaitGroup
-	for _, dest := range destinations {
-		wg.Add(1)
-		go func(dest *Destination) {
-			defer wg.Done()
-			dest.WaitFor()
-		}(dest)
+func WaitLoop(destinations []*Destination, timeout time.Duration) bool {
+	var deadline time.Time
+	if timeout > 0 {
+		deadline = time.Now().Add(timeout)
 	}
 
+	var wg sync.WaitGroup
+	okCh := make(chan bool, len(destinations))
+	for _, dest := range destinations {
+		wg.Add(1)
+		go func(d *Destination) {
+			defer wg.Done()
+			okCh <- d.WaitForUntil(deadline)
+		}(dest)
+	}
 	wg.Wait()
+	close(okCh)
+
+	for ok := range okCh {
+		if !ok {
+			return false
+		}
+	}
+	return true
 }
 
 func MonitorLoop(destinations []*Destination) {

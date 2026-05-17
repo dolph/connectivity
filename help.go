@@ -53,7 +53,8 @@ func PrintCommandUsage(command string) bool {
 	} else if command == "wait" || command == "waitfor" {
 		fmt.Println("Wait for all specified connectivity to be validated successfully at least once.")
 		fmt.Println("")
-		fmt.Println("Usage: connectivity [wait|waitfor] [urls]")
+		fmt.Println("Usage: connectivity [wait|waitfor] [--timeout DURATION]")
+		fmt.Println("  --timeout DURATION  Exit with code 2 if dependencies are not ready in time (e.g. 5m, 90s)")
 		fmt.Println("")
 		fmt.Println("This is useful when you need to wait for DNS propogation, a process to start")
 		fmt.Println("listening, configuration to be applied, etc, before doing something else. The")

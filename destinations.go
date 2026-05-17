@@ -213,15 +213,33 @@ func (dest *Destination) Monitor() {
 	}
 }
 
-func (dest *Destination) WaitFor() {
+func (dest *Destination) WaitForUntil(deadline time.Time) bool {
 	for {
-		reachable := dest.Check()
-
-		if reachable {
-			LogDestination(dest, "Connected")
-			return
+		if !deadline.IsZero() && time.Now().After(deadline) {
+			LogDestinationError(dest, "Timed out waiting for connectivity", fmt.Errorf("deadline exceeded"))
+			return false
 		}
 
-		time.Sleep(15 * time.Second)
+		if dest.Check() {
+			LogDestination(dest, "Connected")
+			return true
+		}
+
+		sleep := 15 * time.Second
+		if !deadline.IsZero() {
+			remaining := time.Until(deadline)
+			if remaining <= 0 {
+				LogDestinationError(dest, "Timed out waiting for connectivity", fmt.Errorf("deadline exceeded"))
+				return false
+			}
+			if remaining < sleep {
+				sleep = remaining
+			}
+		}
+		time.Sleep(sleep)
 	}
+}
+
+func (dest *Destination) WaitFor() {
+	dest.WaitForUntil(time.Time{})
 }
