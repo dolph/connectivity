@@ -18,6 +18,8 @@ If any step in the validation process fails, relevant debugging information is l
 
 ## Configuration
 
+**Note:** Route lookup uses the Linux routing table. On non-Linux platforms, checks continue without gateway metadata instead of crashing.
+
 `connectivity` looks for a configuration file in the following three locations, and uses the first one it finds:
 
 - `./connectivity.yml`

@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"net"
 	"os"
-
-	"github.com/google/gopacket/routing"
 )
 
 type Route struct {
@@ -44,21 +42,8 @@ func GetRoute(ip net.IP) (*Route, error) {
 		GatewayIP:             nil,
 		DestinationIP:         ip}
 
-	r, err := routing.New()
-	if err != nil {
+	if err := lookupRoute(ip, route); err != nil {
 		return route, err
 	}
-
-	iface, gateway, source, err := r.Route(ip)
-	if err != nil {
-		// This is possibly a workaround until something like https://github.com/google/gopacket/pull/697 is released
-		return route, err
-	} else {
-		route.SourceInterfaceName = iface.Name
-		route.SourceHardwareAddress = iface.HardwareAddr
-		route.SourceIP = source
-		route.GatewayIP = gateway
-		return route, nil
-	}
-
+	return route, nil
 }
