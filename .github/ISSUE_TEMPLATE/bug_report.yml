@@ -1,0 +1,42 @@
+name: Bug report
+description: Report a problem running connectivity
+labels: [bug]
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+      description: What you expected vs what you observed.
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: connectivity version
+      description: Output of `connectivity version` or the release tag you installed.
+    validations:
+      required: true
+  - type: input
+    id: os
+    attributes:
+      label: OS / environment
+      description: e.g. Ubuntu 22.04, Kubernetes sidecar, bare metal.
+    validations:
+      required: true
+  - type: textarea
+    id: command
+    attributes:
+      label: Command
+      description: Exact command line you ran.
+    validations:
+      required: true
+  - type: textarea
+    id: config
+    attributes:
+      label: Config (if any)
+      description: Relevant `connectivity.yml` snippet (redact secrets).
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: Relevant log output.
