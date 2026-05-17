@@ -76,11 +76,14 @@ func PrintCommandUsage(command string) bool {
 		fmt.Println("")
 		fmt.Println("Any validation errors will produce a non-zero return code (1). Only the config")
 		fmt.Println("file at the specified path is validated. If no config file is specified, then")
-		fmt.Println("the first config file discovered in order order of precedence is validated:")
+		fmt.Println("the first config file discovered in order of precedence is validated:")
 		fmt.Println("")
 		fmt.Println("- ./connectivity.yml")
+		fmt.Println("- ./connectivity.yaml")
 		fmt.Println("- ~/.connectivity.yml")
+		fmt.Println("- ~/.connectivity.yaml")
 		fmt.Println("- /etc/connectivity.yml")
+		fmt.Println("- /etc/connectivity.yaml")
 	} else {
 		PrintUsage()
 		return false

@@ -39,7 +39,7 @@ func FindConfig() (string, error) {
 			return path, nil
 		}
 	}
-	return "", errors.New("Failed to locate a config file: ./connectivity.yml ~/.connectivity.yml or /etc/connectivity.yml")
+	return "", errors.New("Failed to locate a config file: ./connectivity.yml, ./connectivity.yaml, ~/.connectivity.yml, ~/.connectivity.yaml, /etc/connectivity.yml, or /etc/connectivity.yaml")
 }
 
 func LoadConfig(path string) *Config {
