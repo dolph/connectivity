@@ -110,6 +110,17 @@ jobs:
           file connectivity
           ./connectivity version
 
+      - name: Generate third-party licenses
+        if: steps.bump.outputs.bump != 'skip'
+        run: |
+          set -euo pipefail
+          chmod +x scripts/generate-third-party-licenses.sh
+          ./scripts/generate-third-party-licenses.sh THIRD_PARTY_LICENSES.txt
+
+      - name: Generate checksum
+        if: steps.bump.outputs.bump != 'skip'
+        run: sha256sum connectivity > connectivity.sha256
+
       - name: Create and push annotated tag
         if: steps.bump.outputs.bump != 'skip'
         env:
@@ -129,14 +140,15 @@ jobs:
           HAS_PREV: ${{ steps.ver.outputs.has_prev }}
         run: |
           set -euo pipefail
+          assets=(connectivity connectivity.sha256 THIRD_PARTY_LICENSES.txt)
           if [ "${HAS_PREV}" = "true" ]; then
-            gh release create "${TAG}" connectivity \
+            gh release create "${TAG}" "${assets[@]}" \
               --target "${HEAD_SHA}" \
               --title "${TAG}" \
               --generate-notes \
               --notes-start-tag "${PREV}"
           else
-            gh release create "${TAG}" connectivity \
+            gh release create "${TAG}" "${assets[@]}" \
               --target "${HEAD_SHA}" \
               --title "${TAG}" \
               --generate-notes
