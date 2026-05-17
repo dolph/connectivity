@@ -87,7 +87,7 @@ jobs:
             echo "has_prev=${has_prev}"
           } >> "${GITHUB_OUTPUT}"
 
-      - name: Build static linux/amd64 binary
+      - name: Build release binaries
         if: steps.bump.outputs.bump != 'skip'
         env:
           TAG: ${{ steps.ver.outputs.tag }}
@@ -95,20 +95,40 @@ jobs:
           set -euo pipefail
           GO_VERSION="$(go version | cut -d' ' -f3)"
           BUILD_DATE="$(date --utc --iso-8601=seconds)"
-          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
-            -trimpath \
-            -ldflags="-s -w \
-              -X 'main.GitTag=${TAG}' \
-              -X 'main.GitCommit=${HEAD_SHA}' \
-              -X 'main.GoVersion=${GO_VERSION}' \
-              -X 'main.BuildTimestamp=${BUILD_DATE}' \
-              -X 'main.BuildOS=linux' \
-              -X 'main.BuildArch=amd64' \
-              -X 'main.BuildTainted=false'" \
-            -o connectivity \
-            .
-          file connectivity
-          ./connectivity version
+          LD_FLAGS="-s -w \
+            -X 'main.GitTag=${TAG}' \
+            -X 'main.GitCommit=${HEAD_SHA}' \
+            -X 'main.GoVersion=${GO_VERSION}' \
+            -X 'main.BuildTimestamp=${BUILD_DATE}' \
+            -X 'main.BuildTainted=false'"
+          build_one() {
+            local goos="$1" goarch="$2" build_os="$3" ext="${4:-}"
+            local out="connectivity-${goos}-${goarch}${ext}"
+            echo "Building ${out}"
+            CGO_ENABLED=0 GOOS="${goos}" GOARCH="${goarch}" go build \
+              -trimpath \
+              -ldflags="${LD_FLAGS} -X 'main.BuildOS=${build_os}' -X 'main.BuildArch=${goarch}'" \
+              -o "${out}" \
+              .
+            ls -l "${out}"
+          }
+          build_one linux amd64 linux
+          build_one linux arm64 linux
+          build_one darwin amd64 darwin
+          build_one darwin arm64 darwin
+          build_one windows amd64 windows .exe
+          ./connectivity-linux-amd64 version
+
+      - name: Generate third-party licenses
+        if: steps.bump.outputs.bump != 'skip'
+        run: |
+          set -euo pipefail
+          chmod +x scripts/generate-third-party-licenses.sh
+          ./scripts/generate-third-party-licenses.sh THIRD_PARTY_LICENSES.txt
+
+      - name: Generate checksum
+        if: steps.bump.outputs.bump != 'skip'
+        run: sha256sum connectivity-* > connectivity.sha256
 
       - name: Create and push annotated tag
         if: steps.bump.outputs.bump != 'skip'
@@ -129,14 +149,15 @@ jobs:
           HAS_PREV: ${{ steps.ver.outputs.has_prev }}
         run: |
           set -euo pipefail
+          assets=(connectivity-* connectivity.sha256 THIRD_PARTY_LICENSES.txt)
           if [ "${HAS_PREV}" = "true" ]; then
-            gh release create "${TAG}" connectivity \
+            gh release create "${TAG}" "${assets[@]}" \
               --target "${HEAD_SHA}" \
               --title "${TAG}" \
               --generate-notes \
               --notes-start-tag "${PREV}"
           else
-            gh release create "${TAG}" connectivity \
+            gh release create "${TAG}" "${assets[@]}" \
               --target "${HEAD_SHA}" \
               --title "${TAG}" \
               --generate-notes
