@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"fmt"
+	"log"
 	"net"
 	"net/url"
 	"strconv"
@@ -198,7 +199,16 @@ func (dest *Destination) Monitor() {
 	confidence := 1
 
 	for {
-		reachable := dest.Check()
+		reachable := func() (ok bool) {
+			defer func() {
+				if r := recover(); r != nil {
+					log.Printf("PANIC in monitor for %s: %v", dest, r)
+					dest.Increment("connectivity.monitor.panic", []string{})
+					ok = false
+				}
+			}()
+			return dest.Check()
+		}()
 
 		if reachable {
 			confidence += 1
