@@ -3,9 +3,6 @@ package main
 import (
 	"fmt"
 	"net"
-	"os"
-
-	"github.com/google/gopacket/routing"
 )
 
 type Route struct {
@@ -31,25 +28,15 @@ func (r *Route) String() string {
 }
 
 func GetRoute(ip net.IP) (*Route, error) {
-	hostname, err := os.Hostname()
-	if err != nil {
-		hostname = "localhost"
-	}
-
 	route := &Route{
-		SourceHostname:        hostname,
+		SourceHostname:        routeHostname,
 		SourceInterfaceName:   "",
 		SourceHardwareAddress: nil,
 		SourceIP:              nil,
 		GatewayIP:             nil,
 		DestinationIP:         ip}
 
-	r, err := routing.New()
-	if err != nil {
-		return route, err
-	}
-
-	iface, gateway, source, err := r.Route(ip)
+	iface, gateway, source, err := lookupRoute(ip)
 	if err != nil {
 		// This is possibly a workaround until something like https://github.com/google/gopacket/pull/697 is released
 		return route, err
