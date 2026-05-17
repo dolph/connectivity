@@ -59,29 +59,21 @@ func TestEscapeTag(t *testing.T) {
 	}
 }
 
-// TestEscapeTag_DoesNotEscapeNewlineOrCR documents the missing newline/CR
-// escaping in EscapeTag (#14). The wire-protocol injection risk is that a tag
-// containing a newline ends the current statsd message and starts a new one
-// the collector parses separately.
-//
-// Refs #14 — flip when fixed: once EscapeTag also rewrites \n and \r, the
-// expected values below should change to "a-b" and the test name's assertion
-// flipped to require sanitization.
-func TestEscapeTag_DoesNotEscapeNewlineOrCR(t *testing.T) {
+func TestEscapeTag_EscapesNewlineAndCR(t *testing.T) {
 	cases := []struct {
 		name string
 		in   string
-		want string // current (buggy) behavior: passes the newline/CR through
+		want string
 	}{
-		{name: "newline_passes_through", in: "a\nb", want: "a\nb"},
-		{name: "carriage_return_passes_through", in: "a\rb", want: "a\rb"},
-		{name: "crlf_passes_through", in: "a\r\nb", want: "a\r\nb"},
+		{name: "newline", in: "a\nb", want: "a-b"},
+		{name: "carriage_return", in: "a\rb", want: "a-b"},
+		{name: "crlf", in: "a\r\nb", want: "a--b"},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			got := EscapeTag(tc.in)
 			if got != tc.want {
-				t.Errorf("EscapeTag(%q) = %q; want %q (current buggy behavior — #14)", tc.in, got, tc.want)
+				t.Errorf("EscapeTag(%q) = %q; want %q", tc.in, got, tc.want)
 			}
 		})
 	}
