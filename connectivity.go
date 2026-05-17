@@ -3,7 +3,10 @@ package main
 import (
 	"log"
 	"os"
+	"os/signal"
 	"sync"
+	"syscall"
+	"time"
 )
 
 /*
@@ -67,7 +70,7 @@ func main() {
 		destinations := ParseDestinations(urls)
 		ShowDestinations(destinations)
 		log.Print("Monitoring connectivity...")
-		MonitorLoop(destinations)
+		MonitorLoop(config, destinations)
 	} else if command == "version" {
 		PrintVersion()
 	} else if command == "help" {
@@ -165,11 +168,14 @@ func WaitLoop(destinations []*Destination) {
 	wg.Wait()
 }
 
-func MonitorLoop(destinations []*Destination) {
+func MonitorLoop(config *Config, destinations []*Destination) {
 	for _, dest := range destinations {
 		go dest.Monitor()
 	}
 
-	// Sleep forever
-	select {}
+	sigCh := make(chan os.Signal, 1)
+	signal.Notify(sigCh, os.Interrupt, syscall.SIGTERM)
+	<-sigCh
+	log.Print("Received shutdown signal, draining statsd...")
+	DrainStatsd(config, 5*time.Second)
 }

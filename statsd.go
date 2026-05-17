@@ -39,12 +39,31 @@ func EscapeTag(s string) string {
 	return s
 }
 
+func emitStatsd(config *Config, payload string) {
+	statsdHostPort := fmt.Sprintf("%s:%d", config.StatsdHost, config.StatsdPort)
+	conn, err := net.Dial(config.StatsdProtocol, statsdHostPort)
+	if err != nil {
+		return
+	}
+	_, _ = io.WriteString(conn, payload)
+	_ = conn.Close()
+}
+
 func StatsdSender(config *Config) {
 	for s := range queue {
-		statsdHostPort := fmt.Sprintf("%s:%d", config.StatsdHost, config.StatsdPort)
-		if conn, err := net.Dial(config.StatsdProtocol, statsdHostPort); err == nil {
-			io.WriteString(conn, s)
-			conn.Close()
+		emitStatsd(config, s)
+	}
+}
+
+// DrainStatsd flushes queued metrics for up to timeout before process exit.
+func DrainStatsd(config *Config, timeout time.Duration) {
+	deadline := time.Now().Add(timeout)
+	for time.Now().Before(deadline) {
+		select {
+		case s := <-queue:
+			emitStatsd(config, s)
+		default:
+			return
 		}
 	}
 }
