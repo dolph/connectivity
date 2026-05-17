@@ -20,6 +20,15 @@ func main() {
 		os.Exit(0)
 	}
 
+	switch os.Args[1] {
+	case "-h", "--help":
+		PrintUsage()
+		return
+	case "-v", "--version":
+		PrintVersion()
+		return
+	}
+
 	command := os.Args[1]
 
 	if command == "validate-config" {

@@ -13,12 +13,14 @@ var BuildArch string
 var BuildTainted string
 
 func PrintVersion() {
-	if GitTag != "" {
-		if BuildTainted == "true" {
-			fmt.Printf("Version: %s (tainted)\n", GitTag)
-		} else {
-			fmt.Printf("Version: %s\n", GitTag)
-		}
+	tag := GitTag
+	if tag == "" {
+		tag = "dev"
+	}
+	if BuildTainted == "true" {
+		fmt.Printf("connectivity %s (tainted)\n", tag)
+	} else {
+		fmt.Printf("connectivity %s\n", tag)
 	}
 	fmt.Printf("Commit SHA: %s\n", GitCommit)
 	fmt.Printf("Go Version: %s\n", GoVersion)
