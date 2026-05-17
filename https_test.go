@@ -37,15 +37,7 @@ func TestHTTPS_Returns200(t *testing.T) {
 	}
 }
 
-// TestHTTPS_Returns500ButReportsSuccess documents that HTTPS does not check
-// the response status code, so a 5xx response still returns true. The Go
-// stdlib http.Get only returns an error for transport-level failures (DNS,
-// dial, TLS, etc.), not for HTTP error statuses.
-//
-// Refs #7 — flip when fixed: once HTTPS checks status codes, a 5xx response
-// should return false. To flip this test then, change `want true` to
-// `want false` and update the test name.
-func TestHTTPS_Returns500ButReportsSuccess(t *testing.T) {
+func TestHTTPS_Non2xxReturnsFalse(t *testing.T) {
 	cases := []struct {
 		name   string
 		status int
@@ -63,8 +55,8 @@ func TestHTTPS_Returns500ButReportsSuccess(t *testing.T) {
 			t.Cleanup(srv.Close)
 
 			dest := newTestDestination(t, srv.URL)
-			if !HTTPS(dest) {
-				t.Errorf("HTTPS(%d) = false; want true (current buggy behavior — #7: no status-code check)", tc.status)
+			if HTTPS(dest) {
+				t.Errorf("HTTPS(%d) = true; want false (#7: only 2xx is success)", tc.status)
 			}
 		})
 	}
@@ -105,6 +97,25 @@ func TestHTTPS_FollowsRedirects(t *testing.T) {
 // surfaces: a transport-level dial failure. This is the one input where the
 // current implementation behaves correctly, so the assertion is `want false`
 // outright.
+
+func TestHTTPS_ClosesResponseBody(t *testing.T) {
+	closed := make(chan struct{}, 1)
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte("ok"))
+	}))
+	t.Cleanup(func() {
+		srv.Close()
+		<-closed
+	})
+	// httptest closes when body is read and closed by client; HTTPS must close it.
+	dest := newTestDestination(t, srv.URL)
+	if !HTTPS(dest) {
+		t.Fatal("HTTPS() = false; want true")
+	}
+	closed <- struct{}{}
+}
+
 func TestHTTPS_DialFailureReturnsFalse(t *testing.T) {
 	// 127.0.0.1:1 is a port that's vanishingly unlikely to have a
 	// listener; the connection refuses immediately on Linux.
