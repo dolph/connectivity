@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"math/rand"
 	"fmt"
 	"net"
 	"net/url"
@@ -195,6 +196,9 @@ func (dest *Destination) Check() bool {
 }
 
 func (dest *Destination) Monitor() {
+	// Stagger the first check so destinations do not probe in lockstep (#20).
+	time.Sleep(time.Duration(rand.Int63n(int64(time.Minute))))
+
 	confidence := 1
 
 	for {
