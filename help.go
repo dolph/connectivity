@@ -35,6 +35,7 @@ func PrintUsage() {
 	fmt.Println("  check            Check all connectivity once and exit")
 	fmt.Println("  wait             Wait for all connectivity to be validated successfully")
 	fmt.Println("  monitor          Continuously monitor all connectivity forever")
+	fmt.Println("  doctor           Verbose end-to-end diagnostic for one or more URLs")
 	fmt.Println("  validate-config  Load config without making any network requests")
 	fmt.Println("  version          Show version information")
 	fmt.Println("  help             Show this help text")
@@ -65,6 +66,15 @@ func PrintCommandUsage(command string) bool {
 		fmt.Println("")
 		fmt.Println("This is useful to run as a daemon for continuously monitoring network")
 		fmt.Println("dependencies. The results of each check are emitted via statsd.")
+	} else if command == "doctor" {
+		fmt.Println("Run DNS, route, dial/ping, and HTTP(S) checks with verbose output.")
+		fmt.Println("")
+		fmt.Println("Usage: connectivity doctor <url> [urls...]")
+		fmt.Println("")
+		fmt.Println("Exit codes:")
+		fmt.Println("  0  All layers passed for every URL")
+		fmt.Println("  1  At least one layer failed")
+		fmt.Println("  2  URL parse failure")
 	} else if command == "version" {
 		fmt.Println("Show version information about this build")
 		fmt.Println("")

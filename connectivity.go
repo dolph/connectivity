@@ -68,6 +68,23 @@ func main() {
 		ShowDestinations(destinations)
 		log.Print("Monitoring connectivity...")
 		MonitorLoop(destinations)
+	} else if command == "doctor" {
+		if len(os.Args) < 3 {
+			log.Fatal("usage: connectivity doctor <url> [urls...]")
+		}
+		configPath, _ := FindConfig()
+		config := LoadConfig(configPath)
+		go StatsdSender(config)
+		var urls []Url
+		for _, raw := range os.Args[2:] {
+			urls = append(urls, Url{Url: raw})
+		}
+		destinations := ParseDestinations(urls)
+		ShowDestinations(destinations)
+		if DoctorLoop(destinations) {
+			os.Exit(0)
+		}
+		os.Exit(1)
 	} else if command == "version" {
 		PrintVersion()
 	} else if command == "help" {
