@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"fmt"
+	"log"
 	"net"
 	"net/url"
 	"strconv"
@@ -29,6 +30,7 @@ type Destination struct {
 	Host        string
 	Port        int
 	Path        string
+	tagSlice    []string
 }
 
 func (dest Destination) String() string {
@@ -65,24 +67,32 @@ func (dest *Destination) UrlString() string {
 	return s
 }
 
-func (dest *Destination) tags() []string {
+func (dest *Destination) buildTagSlice() []string {
 	return []string{
-		fmt.Sprintf("dest_label:%s", EscapeTag(dest.Label)),
-		fmt.Sprintf("dest_scheme:%s", EscapeTag(dest.Scheme)),
-		fmt.Sprintf("dest_host:%s", EscapeTag(dest.Host)),
-		fmt.Sprintf("dest_port:%d", dest.Port),
-		fmt.Sprintf("dest_protocol:%s", EscapeTag(dest.Protocol)),
+		"dest_label:" + EscapeTag(dest.Label),
+		"dest_scheme:" + EscapeTag(dest.Scheme),
+		"dest_host:" + EscapeTag(dest.Host),
+		"dest_port:" + strconv.Itoa(dest.Port),
+		"dest_protocol:" + EscapeTag(dest.Protocol),
 	}
 }
 
+func (dest *Destination) mergeTags(extra []string) []string {
+	if len(extra) == 0 {
+		return dest.tagSlice
+	}
+	merged := make([]string, 0, len(extra)+len(dest.tagSlice))
+	merged = append(merged, extra...)
+	merged = append(merged, dest.tagSlice...)
+	return merged
+}
+
 func (dest *Destination) Increment(metric string, tags []string) {
-	tags = append(tags, dest.tags()...)
-	Increment(metric, tags)
+	Increment(metric, dest.mergeTags(tags))
 }
 
 func (dest *Destination) Timer(metric string, took time.Duration, tags []string) {
-	tags = append(tags, dest.tags()...)
-	Timer(metric, took, tags)
+	Timer(metric, took, dest.mergeTags(tags))
 }
 
 func NewDestination(u Url) (*Destination, error) {
@@ -134,18 +144,20 @@ func NewDestination(u Url) (*Destination, error) {
 	username := url.User.Username()
 	password, passwordSet := url.User.Password()
 
-	return &Destination{
-			Label:       u.Label,
-			URL:         u.Url,
-			Protocol:    protocol,
-			Scheme:      scheme,
-			Username:    username,
-			Password:    password,
-			PasswordSet: passwordSet,
-			Host:        host,
-			Port:        portNumber,
-			Path:        url.Path},
-		nil
+	dest := &Destination{
+		Label:       u.Label,
+		URL:         u.Url,
+		Protocol:    protocol,
+		Scheme:      scheme,
+		Username:    username,
+		Password:    password,
+		PasswordSet: passwordSet,
+		Host:        host,
+		Port:        portNumber,
+		Path:        url.Path,
+	}
+	dest.tagSlice = dest.buildTagSlice()
+	return dest, nil
 }
 
 func (dest *Destination) Check() bool {
@@ -167,7 +179,9 @@ func (dest *Destination) Check() bool {
 				// Check destination IP for routability
 				route, err := GetRoute(ip)
 				if err != nil {
-					LogDestinationError(dest, fmt.Sprintf("Failed to route to %s", ip.String()), err)
+					LogDestination(dest, fmt.Sprintf("Route lookup unavailable for %s (non-fatal, continuing): %v", ip.String(), err))
+				} else if Verbose {
+					LogRoute(route, "route selected for "+ip.String())
 				}
 
 				if dest.Protocol == "icmp" {
@@ -198,7 +212,16 @@ func (dest *Destination) Monitor() {
 	confidence := 1
 
 	for {
-		reachable := dest.Check()
+		reachable := func() (ok bool) {
+			defer func() {
+				if r := recover(); r != nil {
+					log.Printf("PANIC in monitor for %s: %v", dest, r)
+					dest.Increment("connectivity.monitor.panic", []string{})
+					ok = false
+				}
+			}()
+			return dest.Check()
+		}()
 
 		if reachable {
 			confidence += 1

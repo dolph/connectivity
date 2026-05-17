@@ -15,18 +15,19 @@ monitor). All goroutines are managed here.
 */
 
 func main() {
-	if len(os.Args) == 1 {
+	remainingArgs = stripGlobalFlags(os.Args[1:])
+	if len(remainingArgs) == 0 {
 		PrintUsage()
 		os.Exit(0)
 	}
 
-	command := os.Args[1]
+	command := remainingArgs[0]
 
 	if command == "validate-config" {
 		var configPath string
 		var err error
-		if len(os.Args) == 3 {
-			configPath = os.Args[2]
+		if len(remainingArgs) == 3 {
+			configPath = remainingArgs[2]
 		} else {
 			configPath, err = FindConfig()
 			if err != nil {
@@ -65,15 +66,16 @@ func main() {
 		go StatsdSender(config)
 		urls := GetURLs(config)
 		destinations := ParseDestinations(urls)
+		LogMonitorStartup(configPath, config, destinations)
 		ShowDestinations(destinations)
 		log.Print("Monitoring connectivity...")
 		MonitorLoop(destinations)
 	} else if command == "version" {
 		PrintVersion()
 	} else if command == "help" {
-		if len(os.Args) == 3 {
+		if len(remainingArgs) == 3 {
 			// connectivity help <subcommand>
-			if PrintCommandUsage(os.Args[2]) {
+			if PrintCommandUsage(remainingArgs[2]) {
 				// Command usage for this argument was found
 				os.Exit(0)
 			} else {
@@ -93,11 +95,11 @@ func main() {
 }
 
 func GetURLs(config *Config) []Url {
-	if len(os.Args) > 2 {
+	if len(remainingArgs) > 2 {
 		// Ignore URLs in the config file and use the ones from the CLI instead
 		config.URLs = []Url{}
 
-		for _, url := range os.Args[1:len(os.Args)] {
+		for _, url := range remainingArgs[2:] {
 			config.URLs = append(config.URLs, Url{Url: url})
 		}
 	}
@@ -108,21 +110,37 @@ func ParseDestinations(urls []Url) []*Destination {
 	// Validate all destinations before beginning any monitoring
 	errEncountered := false
 	var destinations []*Destination
-	for idx, url := range urls {
-		if idx != 0 {
-			dest, err := NewDestination(url)
-			if err != nil {
-				log.Printf("%s", err)
-				errEncountered = true
-			} else {
-				destinations = append(destinations, dest)
-			}
+	for _, url := range urls {
+		dest, err := NewDestination(url)
+		if err != nil {
+			log.Printf("%s", err)
+			errEncountered = true
+		} else {
+			destinations = append(destinations, dest)
 		}
 	}
 	if errEncountered {
 		os.Exit(2)
 	}
 	return destinations
+}
+
+func LogMonitorStartup(configPath string, config *Config, destinations []*Destination) {
+	if GitTag != "" {
+		if BuildTainted == "true" {
+			log.Printf("connectivity version %s (tainted)", GitTag)
+		} else {
+			log.Printf("connectivity version %s", GitTag)
+		}
+	}
+	log.Printf("connectivity commit %s built %s (%s/%s)", GitCommit, BuildTimestamp, BuildOS, BuildArch)
+	if configPath != "" {
+		log.Printf("config: %s", configPath)
+	} else {
+		log.Printf("config: (none, using CLI URLs)")
+	}
+	log.Printf("statsd: %s:%d (%s)", config.StatsdHost, config.StatsdPort, config.StatsdProtocol)
+	log.Printf("destinations: %d", len(destinations))
 }
 
 func ShowDestinations(destinations []*Destination) {

@@ -22,9 +22,13 @@ func Lookup(dest *Destination) ([]net.IP, error) {
 
 	var ips []net.IP
 	for _, ip := range results {
-		// Ignore IPv6 for now
 		if ip.To4() != nil {
 			ips = append(ips, ip)
+		}
+	}
+	if Verbose {
+		for _, ip := range ips {
+			LogDestination(dest, "DNS resolved "+ip.String())
 		}
 	}
 	return ips, nil
