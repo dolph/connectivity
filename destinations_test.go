@@ -404,3 +404,40 @@ func TestUrlString_RedactedDoesNotContainPassword(t *testing.T) {
 		t.Errorf("UrlString() = %q; want it to contain redaction marker %q", got, "[...]")
 	}
 }
+
+func TestNewDestinationCachesTagSlice(t *testing.T) {
+	dest, err := NewDestination(Url{Label: "x", Url: "https://example.com"})
+	assertNoError(t, "https://example.com", err)
+	if len(dest.tagSlice) != 5 {
+		t.Fatalf("tagSlice len = %d, want 5", len(dest.tagSlice))
+	}
+	want := dest.buildTagSlice()
+	for i := range want {
+		if dest.tagSlice[i] != want[i] {
+			t.Errorf("tagSlice[%d] = %q, want %q", i, dest.tagSlice[i], want[i])
+		}
+	}
+}
+
+func BenchmarkDestinationIncrement(b *testing.B) {
+	dest, err := NewDestination(Url{Label: "x", Url: "https://example.com"})
+	if err != nil {
+		b.Fatal(err)
+	}
+	done := make(chan struct{})
+	go func() {
+		for {
+			select {
+			case <-queue:
+			case <-done:
+				return
+			}
+		}
+	}()
+	defer close(done)
+
+	b.ReportAllocs()
+	for i := 0; i < b.N; i++ {
+		dest.Increment("connectivity.check", nil)
+	}
+}
