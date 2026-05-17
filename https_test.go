@@ -70,16 +70,8 @@ func TestHTTPS_Returns500ButReportsSuccess(t *testing.T) {
 	}
 }
 
-// TestHTTPS_FollowsRedirects documents that HTTPS follows redirects (up to
-// Go's default of 10 hops) without restriction. A check tool that silently
-// follows a redirect to a different host can mask the very routing /
-// availability issues it's meant to detect.
-//
-// Refs #15 — flip when fixed: once HTTPS disables redirect following (or
-// records the redirect chain), this test should assert that the destination
-// behind a 3xx is NOT considered reachable, or that the redirect target was
-// recorded.
-func TestHTTPS_FollowsRedirects(t *testing.T) {
+// TestHTTPS_DoesNotFollowRedirects ensures HTTPS does not follow redirects (#15).
+func TestHTTPS_DoesNotFollowRedirects(t *testing.T) {
 	var finalHits int32
 	final := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		atomic.AddInt32(&finalHits, 1)
@@ -93,11 +85,11 @@ func TestHTTPS_FollowsRedirects(t *testing.T) {
 	t.Cleanup(redirector.Close)
 
 	dest := newTestDestination(t, redirector.URL)
-	if !HTTPS(dest) {
-		t.Errorf("HTTPS(redirect) = false; want true (current buggy behavior — #15: redirects are followed)")
+	if HTTPS(dest) {
+		t.Errorf("HTTPS(redirect) = true; want false (#15: redirects must not be followed)")
 	}
-	if got := atomic.LoadInt32(&finalHits); got != 1 {
-		t.Errorf("final server hit count = %d; want 1 (current buggy behavior — #15: redirects are followed)", got)
+	if got := atomic.LoadInt32(&finalHits); got != 0 {
+		t.Errorf("final server hit count = %d; want 0 (#15: redirects must not be followed)", got)
 	}
 }
 
