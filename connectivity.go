@@ -97,7 +97,7 @@ func GetURLs(config *Config) []Url {
 		// Ignore URLs in the config file and use the ones from the CLI instead
 		config.URLs = []Url{}
 
-		for _, url := range os.Args[1:len(os.Args)] {
+		for _, url := range os.Args[2:] {
 			config.URLs = append(config.URLs, Url{Url: url})
 		}
 	}
@@ -108,15 +108,13 @@ func ParseDestinations(urls []Url) []*Destination {
 	// Validate all destinations before beginning any monitoring
 	errEncountered := false
 	var destinations []*Destination
-	for idx, url := range urls {
-		if idx != 0 {
-			dest, err := NewDestination(url)
-			if err != nil {
-				log.Printf("%s", err)
-				errEncountered = true
-			} else {
-				destinations = append(destinations, dest)
-			}
+	for _, url := range urls {
+		dest, err := NewDestination(url)
+		if err != nil {
+			log.Printf("%s", err)
+			errEncountered = true
+		} else {
+			destinations = append(destinations, dest)
 		}
 	}
 	if errEncountered {
