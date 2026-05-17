@@ -5,6 +5,8 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"path/filepath"
+	"strings"
 
 	"gopkg.in/yaml.v3"
 )
@@ -35,11 +37,32 @@ var ConfigPaths = [6]string{
 
 func FindConfig() (string, error) {
 	for _, path := range ConfigPaths {
+		path = expandHomePath(path)
 		if _, err := os.Stat(path); err == nil {
 			return path, nil
 		}
 	}
 	return "", errors.New("Failed to locate a config file: ./connectivity.yml ~/.connectivity.yml or /etc/connectivity.yml")
+}
+
+func expandHomePath(path string) string {
+	if path == "~" {
+		home, err := os.UserHomeDir()
+		if err != nil {
+			return path
+		}
+		return home
+	}
+
+	if strings.HasPrefix(path, "~/") {
+		home, err := os.UserHomeDir()
+		if err != nil {
+			return path
+		}
+		return filepath.Join(home, path[2:])
+	}
+
+	return path
 }
 
 func LoadConfig(path string) *Config {

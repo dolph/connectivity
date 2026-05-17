@@ -182,6 +182,38 @@ func TestLoadConfig_MissingFileFatals(t *testing.T) {
 	}
 }
 
+func TestFindConfig_ExpandsHomeConfigPath(t *testing.T) {
+	home := t.TempDir()
+	cwd := t.TempDir()
+	t.Setenv("HOME", home)
+
+	configPath := filepath.Join(home, ".connectivity.yml")
+	if err := os.WriteFile(configPath, []byte("example: http://example.com\n"), 0o600); err != nil {
+		t.Fatalf("os.WriteFile(%q): %v", configPath, err)
+	}
+
+	prev, err := os.Getwd()
+	if err != nil {
+		t.Fatalf("os.Getwd: %v", err)
+	}
+	t.Cleanup(func() {
+		if err := os.Chdir(prev); err != nil {
+			t.Fatalf("os.Chdir(%q): %v", prev, err)
+		}
+	})
+	if err := os.Chdir(cwd); err != nil {
+		t.Fatalf("os.Chdir(%q): %v", cwd, err)
+	}
+
+	path, err := FindConfig()
+	if err != nil {
+		t.Fatalf("FindConfig() error = %v; want nil", err)
+	}
+	if path != configPath {
+		t.Errorf("FindConfig() path = %q; want %q", path, configPath)
+	}
+}
+
 func TestFindConfig_ReturnsErrorWhenNoneExist(t *testing.T) {
 	// Run in a temp dir so the current working directory does not contain
 	// any of the relative ConfigPaths (connectivity.yml, etc).
