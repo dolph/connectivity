@@ -65,6 +65,7 @@ func main() {
 		go StatsdSender(config)
 		urls := GetURLs(config)
 		destinations := ParseDestinations(urls)
+		LogMonitorStartup(configPath, config, destinations)
 		ShowDestinations(destinations)
 		log.Print("Monitoring connectivity...")
 		MonitorLoop(destinations)
@@ -123,6 +124,42 @@ func ParseDestinations(urls []Url) []*Destination {
 		os.Exit(2)
 	}
 	return destinations
+}
+
+func LogMonitorStartup(configPath string, config *Config, destinations []*Destination) {
+	if GitTag != "" {
+		if BuildTainted == "true" {
+			log.Printf("connectivity version %s (tainted)", GitTag)
+		} else {
+			log.Printf("connectivity version %s", GitTag)
+		}
+	}
+	log.Printf("connectivity commit %s built %s (%s/%s)", GitCommit, BuildTimestamp, BuildOS, BuildArch)
+	if configPath != "" {
+		log.Printf("config: %s", configPath)
+	} else {
+		log.Printf("config: (none, using CLI URLs)")
+	}
+	log.Printf("statsd: %s:%d (%s)", config.StatsdHost, config.StatsdPort, config.StatsdProtocol)
+	log.Printf("destinations: %d", len(destinations))
+}
+
+func LogMonitorStartup(configPath string, config *Config, destinations []*Destination) {
+	if GitTag != "" {
+		if BuildTainted == "true" {
+			log.Printf("connectivity version %s (tainted)", GitTag)
+		} else {
+			log.Printf("connectivity version %s", GitTag)
+		}
+	}
+	log.Printf("connectivity commit %s built %s (%s/%s)", GitCommit, BuildTimestamp, BuildOS, BuildArch)
+	if configPath != "" {
+		log.Printf("config: %s", configPath)
+	} else {
+		log.Printf("config: (none, using CLI URLs)")
+	}
+	log.Printf("statsd: %s:%d (%s)", config.StatsdHost, config.StatsdPort, config.StatsdProtocol)
+	log.Printf("destinations: %d", len(destinations))
 }
 
 func ShowDestinations(destinations []*Destination) {
