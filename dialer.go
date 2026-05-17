@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"net"
+	"time"
 )
 
 // Try to open a connection to the destination, and then immediately disconnect
@@ -14,7 +15,7 @@ func Dial(route *Route, dest *Destination, ip net.IP) bool {
 
 	// Test destination IP by dialing route
 	dest.Increment("connectivity.dial", metricTags)
-	conn, err := net.Dial(dest.Protocol, hostPort)
+	conn, err := net.DialTimeout(dest.Protocol, hostPort, 10*time.Second)
 	if err != nil {
 		dest.Increment("connectivity.dial.error", metricTags)
 		LogRouteDestinationError(route, dest, "Failed", err)
