@@ -167,7 +167,7 @@ func (dest *Destination) Check() bool {
 				// Check destination IP for routability
 				route, err := GetRoute(ip)
 				if err != nil {
-					LogDestinationError(dest, fmt.Sprintf("Failed to route to %s", ip.String()), err)
+					LogDestination(dest, fmt.Sprintf("Route lookup unavailable for %s (non-fatal, continuing): %v", ip.String(), err))
 				}
 
 				if dest.Protocol == "icmp" {
