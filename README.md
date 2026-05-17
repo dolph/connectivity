@@ -16,6 +16,20 @@ Given a set of URLs, connectivity attempts to validate each one as thoroughly as
 
 If any step in the validation process fails, relevant debugging information is logged.
 
+## Exit codes
+
+`connectivity check` uses the following exit codes for scripting and runbooks:
+
+| Code | Meaning |
+|------|---------|
+| 0 | All destinations reachable |
+| 1 | At least one destination unreachable, no config file found, or no destinations could be parsed |
+| 2 | Destination URL parse failure (before checks run) or invalid subcommand |
+
+`connectivity validate-config` exits 0 on success and 1 when the config file fails validation.
+
+Invalid subcommands (including unknown arguments to `connectivity help`) exit 2.
+
 ## Configuration
 
 `connectivity` looks for a configuration file in the following three locations, and uses the first one it finds:
