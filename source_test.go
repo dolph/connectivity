@@ -41,3 +41,11 @@ func TestGetLocalIPs(t *testing.T) {
 	assertValidIPs(t, got)
 	assertLoopbackOnlyReturnedByItself(t, got)
 }
+
+func TestGetLocalIPs_ReturnsCachedInstance(t *testing.T) {
+	first := GetLocalIPs()
+	second := GetLocalIPs()
+	if first != second {
+		t.Fatal("GetLocalIPs() returned different instances; want one cached value per process")
+	}
+}
