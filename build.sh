@@ -8,8 +8,8 @@ go vet
 GIT_COMMIT="$(git rev-parse --short HEAD)"
 GIT_TAG="$(git tag --points-at HEAD)"
 GO_VERSION="$(go version | cut -d' ' -f3)"
-BUILD_DATE="$(date --utc)"
-BUILD_ARCH="$(arch)"
+BUILD_DATE="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+BUILD_ARCH="$(uname -m)"
 if [ "$(git status -s | wc -l)" -eq "0" ]; then
     BUILD_TAINTED=false
 else
