@@ -17,7 +17,11 @@ func Dial(route *Route, dest *Destination, ip net.IP) bool {
 	conn, err := net.Dial(dest.Protocol, hostPort)
 	if err != nil {
 		dest.Increment("connectivity.dial.error", metricTags)
-		LogRouteDestinationError(route, dest, "Failed", err)
+		stage := "TCP dial failed"
+		if dest.Protocol == "udp" {
+			stage = "UDP send failed"
+		}
+		LogRouteDestinationError(route, dest, stage, err)
 		return false
 	}
 	defer conn.Close()
