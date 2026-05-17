@@ -47,7 +47,7 @@ HTTPS: https://example.com/health
 
 OSI Layer 3 (Network):
 
-- `icmp://`: Validate the destination by pinging it (ICMP). You must not specify a port. Response time metrics are emitted via statsd.
+- `icmp://`: Validate the destination by pinging it (ICMP). You must not specify a port. Response time metrics are emitted via statsd. ICMP checks use raw sockets and require the process to run as root or with `CAP_NET_RAW` on Linux (and Administrator on Windows).
 
 OSI Layer 4 (Transport):
 
