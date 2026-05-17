@@ -2,7 +2,6 @@ package main
 
 import (
 	"errors"
-	"io/ioutil"
 	"log"
 	"os"
 
@@ -42,32 +41,17 @@ func FindConfig() (string, error) {
 	return "", errors.New("Failed to locate a config file: ./connectivity.yml ~/.connectivity.yml or /etc/connectivity.yml")
 }
 
-func LoadConfig(path string) *Config {
-	if path == "" {
-		return &Config{}
-	}
-
-	f, err := ioutil.ReadFile(path)
-	if err != nil {
-		log.Fatalf("Failed to open config file (%s): %v", path, err)
-	}
-
-	log.Printf("Loading config from %s", path)
-
+func parseConfigYAML(data []byte) (*Config, error) {
 	var configMap map[string]string
-	err = yaml.Unmarshal(f, &configMap)
-	if err != nil {
-		log.Fatalf("Failed to parse YAML config file (%s): %v", path, err)
+	if err := yaml.Unmarshal(data, &configMap); err != nil {
+		return nil, err
 	}
 
 	var cfg Config
-
-	// Extract the URL labels & values from the struct
 	for k, v := range configMap {
 		cfg.URLs = append(cfg.URLs, Url{Label: k, Url: v})
 	}
 
-	// Apply some default values
 	if cfg.StatsdHost == "" {
 		cfg.StatsdHost = "127.0.0.1"
 	}
@@ -78,5 +62,25 @@ func LoadConfig(path string) *Config {
 		cfg.StatsdProtocol = "udp"
 	}
 
-	return &cfg
+	return &cfg, nil
+}
+
+func LoadConfig(path string) *Config {
+	if path == "" {
+		return &Config{}
+	}
+
+	f, err := os.ReadFile(path)
+	if err != nil {
+		log.Fatalf("Failed to open config file (%s): %v", path, err)
+	}
+
+	log.Printf("Loading config from %s", path)
+
+	cfg, err := parseConfigYAML(f)
+	if err != nil {
+		log.Fatalf("Failed to parse YAML config file (%s): %v", path, err)
+	}
+
+	return cfg
 }
